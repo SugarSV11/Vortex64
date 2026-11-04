@@ -1,0 +1,181 @@
+#pragma once
+#include <atomic>
+#include <Project64-plugin-spec/Input.h>
+#include "Button.h"
+#include "N64Controller.h"
+#include "Shortcuts.h"
+#include "Win32CompatTypes.h"
+#include <Common/CriticalSection.h>
+#ifdef _WIN32
+#include "DeviceNotification.h"
+#endif
+#include <SDL.h>
+#include <cstring>
+#include <string>
+#include <map>
+
+#pragma pack(push, 8)
+typedef struct
+{
+    LONG lX;
+    LONG lY;
+    LONG lZ;
+    LONG lRx;
+    LONG lRy;
+    LONG lRz;
+    LONG rglSlider[2];
+    DWORD rgdwPOV[4];
+    BYTE rgbButtons[32];
+} DIJOYSTATE_COMPAT;
+
+typedef struct
+{
+    LONG lX;
+    LONG lY;
+    LONG lZ;
+    // 0..31: the buttons as SDL numbers them (left, middle, right, X1 (back), X2 (forward), 5..31), 32..35: the wheel
+    // (up, down, left, right) while it moves
+    BYTE rgbButtons[40];
+} DIMOUSESTATE2_COMPAT;
+#pragma pack(pop)
+
+class CSdlInput
+{
+    enum
+    {
+        CONFIG_THRESHOLD = 50,
+        MIN_AXIS_VALUE = -32767,
+        MAX_AXIS_VALUE = 32767,
+        AXIS_TOP_VALUE = MAX_AXIS_VALUE / 2,
+        AXIS_BOTTOM_VALUE = MAX_AXIS_VALUE + AXIS_TOP_VALUE,
+        RANGE_RELATIVE = 0x8000,
+        AI_AXE_POSITIVE = 0,
+        AI_AXE_NEGATIVE = 1,
+        THRESHOLD = 50,
+        MOUSESCALEVALUE = 10,
+    };
+
+    enum AI_POV
+    {
+        AI_POV_UP = 0,
+        AI_POV_RIGHT = 1,
+        AI_POV_DOWN = 2,
+        AI_POV_LEFT = 3,
+    };
+
+public:
+    enum ScanResult
+    {
+        SCAN_FAILED = 0x00,
+        SCAN_SUCCEED = 0x01,
+        SCAN_ESCAPE = 0x10,
+    };
+
+    CSdlInput(HINSTANCE hinst);
+    ~CSdlInput();
+
+    void Initiate(CONTROL_INFO * ControlInfo);
+    void MapControllerDevice(N64CONTROLLER & Controller);
+    void MapShortcutDevice(SHORTCUTS& Shortcuts);
+    ScanResult ScanDevices(BUTTON & Button);
+    const GUID & KeyboardGuid() const
+    {
+        return m_GuidKeyboard;
+    }
+    const GUID & MouseGuid() const
+    {
+        return m_GuidMouse;
+    }
+    std::wstring ButtonAssignment(BUTTON & Button);
+    std::wstring ControllerDevices(const N64CONTROLLER & Controller);
+    bool IsButtonPressed(BUTTON & Button);
+    void GetAxis(N64CONTROLLER & Controller, BUTTONS * Keys);
+    void UpdateDeviceData(void);
+    // The keyboard and the mouse of the application that hosts the plugin (Vortex64 gives what its window receives): the
+    // game runs in a window of Qt, and SDL has no window with the focus there, so its own state of the keyboard and of the
+    // mouse never changes. Kind: 0 key (Code: evdev code, Value 1/0), 1 mouse button (Code: SDL number - 1), 2 wheel
+    // pulse (Code: 0 up, 1 down, 2 left, 3 right), 3 mouse movement (Code: dx, Value: dy), 4 everything released
+    void ExternalEvent(int Kind, int Code, int Value);
+    void DevicesChanged(void);
+    // a controller was connected or removed (SDL events): true once, then the owner refreshes and maps again
+    void PollHotPlug(void);
+    bool TakeHotPlug(void);
+
+    void NotifyConfigDialogOpen(bool open);
+    void NotifyScanActive(bool active);
+    void NotifyRomOpen(bool open);
+
+private:
+    CSdlInput();
+    CSdlInput(const CSdlInput&);
+    CSdlInput& operator=(const CSdlInput&);
+
+    struct DEVICE_ENTRY
+    {
+        uint32_t dwDevType;
+        std::string InstanceName;
+        std::string ProductName;
+        SDL_Joystick * joystick;
+        SDL_GameController * gamecontroller;
+        int sdlJoystickIndex;
+        union INPUTSTATE
+        {
+            DIJOYSTATE_COMPAT Joy;
+            DIMOUSESTATE2_COMPAT Mouse;
+            uint8_t Keyboard[512];
+        } State;
+    };
+
+    void RefreshDeviceList(void);
+    void CloseJoystickDevices(void);
+    void SyncJoystickState(DEVICE_ENTRY & dev);
+    static void FillJoyState(const DEVICE_ENTRY & dev, DIJOYSTATE_COMPAT & j);
+
+    ScanResult ScanKeyboard(const GUID & DeviceGuid, uint8_t * KeyboardState, BUTTON & pButton);
+    ScanResult ScanGamePad(const GUID & DeviceGuid, DIJOYSTATE_COMPAT & BaseState, BUTTON & pButton);
+    ScanResult ScanMouse(const GUID& DeviceGuid, DIMOUSESTATE2_COMPAT& BaseState, BUTTON& pButton);
+    bool JoyPadPovPressed(AI_POV Pov, int32_t Angle);
+
+    struct GUIDComparer
+    {
+        bool operator()(const GUID & Left, const GUID & Right) const
+        {
+            return memcmp(&Left, &Right, sizeof(Right)) < 0;
+        }
+    };
+    typedef std::map<GUID, DEVICE_ENTRY, GUIDComparer> DEVICE_MAP;
+
+    static GUID GuidFromSdlJoystick(SDL_JoystickID id);
+    static void MakeKeyboardMouseGuids(GUID * outKeyboard, GUID * outMouse);
+
+    void EnsurePumpWindow(void);
+    void DestroyPumpWindow(void);
+    void ApplyPumpTimerInterval(void);
+    static LRESULT CALLBACK PumpWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+#ifdef _WIN32
+    DeviceNotification m_DeviceNotification;
+#endif
+    DEVICE_MAP m_Devices;
+    CriticalSection m_DeviceCS;
+    bool m_HotPlugPending = false;
+    // set by the SDL event watch (the video plugins empty the queue of events: the watch sees them first)
+    std::atomic<bool> m_HotPlugEvent{false};
+    std::atomic<uint8_t> m_ExtKeys[512];    // by SDL scancode
+    std::atomic<uint8_t> m_ExtButtons[32];
+    std::atomic<int32_t> m_ExtMotionX{0}, m_ExtMotionY{0};
+    std::atomic<uint32_t> m_WheelUntil[4]; // up, down, left, right: until when (SDL_GetTicks) the wheel counts as pressed
+    static int SDLCALL WatchEvents(void * Data, SDL_Event * Event);
+    HINSTANCE m_hinst;
+    HWND m_hWnd;
+    HWND m_PumpHwnd;
+    bool m_SdlInited;
+    bool m_ConfigDialogOpen;
+    bool m_ScanActive;
+    bool m_RomOpen;
+    GUID m_GuidKeyboard;
+    GUID m_GuidMouse;
+    LONG m_MouseAccumX;
+    LONG m_MouseAccumY;
+    LONG m_MouseAccumZ;
+};

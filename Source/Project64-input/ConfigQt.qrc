@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/input">
+        <file>Controller.bmp</file>
+        <file>Mouse.bmp</file>
+    </qresource>
+</RCC>

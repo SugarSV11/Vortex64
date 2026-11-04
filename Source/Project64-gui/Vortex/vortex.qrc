@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/vortex">
+        <file alias="logo-glyph.png">../../../Assets/Vortex64/Vortex-glyph.png</file>
+    </qresource>
+</RCC>

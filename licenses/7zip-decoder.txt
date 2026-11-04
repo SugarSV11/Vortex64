@@ -1,0 +1,4 @@
+7-Zip C SDK
+Igor Pavlov
+
+7-Zip C SDK is placed in the public domain.

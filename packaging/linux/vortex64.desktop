@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Name=Vortex64
+GenericName=Nintendo 64 Emulator
+GenericName[es]=Emulador de Nintendo 64
+Comment=Play Nintendo 64 and 64DD games
+Comment[es]=Juega a juegos de Nintendo 64 y 64DD
+Exec=vortex64 %f
+TryExec=vortex64
+Icon=vortex64
+Terminal=false
+Categories=Game;Emulator;
+MimeType=application/x-n64-rom;
+Keywords=N64;Nintendo;Emulator;Emulation;Vortex64;
+StartupNotify=true
+StartupWMClass=vortex64

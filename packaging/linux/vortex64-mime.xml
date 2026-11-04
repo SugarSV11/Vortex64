@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+    <mime-type type="application/x-n64-rom">
+        <comment>Nintendo 64 ROM image</comment>
+        <glob pattern="*.z64"/>
+        <glob pattern="*.n64"/>
+        <glob pattern="*.v64"/>
+        <magic priority="50">
+            <!-- Big-endian .z64 (native N64 byte order): first word 0x80371240 -->
+            <match type="string" value="\x80\x37\x12\x40" offset="0"/>
+            <!-- Byte-swapped .v64: first word 0x37804012 -->
+            <match type="string" value="\x37\x80\x40\x12" offset="0"/>
+            <!-- Little-endian .n64: first word 0x40123780 -->
+            <match type="string" value="\x40\x12\x37\x80" offset="0"/>
+        </magic>
+    </mime-type>
+</mime-info>
