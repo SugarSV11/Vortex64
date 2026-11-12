@@ -1,11 +1,11 @@
 # Project64 — Auditoría de portabilidad a Linux nativo
 
-> **Aviso (sesión Claude/Codex):** las afirmaciones de este documento sobre Cheats, Enhancements, ROM Info, Hotkeys, ROM Browser, Audio/Input/Video Settings y "sin huecos ocultos" eran incorrectas: esos manejadores solo mostraban un `QMessageBox`. El estado real y verificado está en `PROJECT64_PARITY.md`.
+> **Aviso:** las afirmaciones de este documento sobre Cheats, Enhancements, ROM Info, Hotkeys, ROM Browser, Audio/Input/Video Settings y "sin huecos ocultos" eran incorrectas: esos manejadores solo mostraban un `QMessageBox`. El estado real y verificado está en `PROJECT64_PARITY.md`.
 
 
 **Fecha:** 2026-09-21
 **Repositorio auditado:** `project64/project64` (GitHub) — commit `777fbdfb2`
-**Nota importante:** la URL solicitada originalmente, `github.com/project64/project64se`, **no existe** (404 en la API de GitHub, 0 resultados en la búsqueda global). El repositorio oficial y activo del proyecto es `github.com/project64/project64`. Esta auditoría se realizó sobre ese repositorio, clonado con submódulos (`Source/GLideN64/Source`, `external/sdl`) en `$HOME/Escritorio/project64-linux`.
+**Nota importante:** la URL solicitada originalmente, `github.com/project64/project64se`, **no existe** (404 en la API de GitHub, 0 resultados en la búsqueda global). El repositorio oficial y activo del proyecto es `github.com/project64/project64`. Esta auditoría se realizó sobre ese repositorio, clonado con submódulos (`Source/GLideN64/Source`, `external/sdl`) en `project64-linux`.
 
 **Alcance de esta fase:** solo inspección. No se ha modificado ningún archivo del código fuente.
 
@@ -181,7 +181,7 @@ Ninguna pieza detectada obligó a usar Wine, Proton, MinGW-como-solución-final,
 Estado post-implementación real (d28bb3987 + fe636b869):
 - GUI Qt6: Plugin Settings (VERIFIED), Video Settings (VERIFIED con referencia Config.cpp/SDL2-OpenGL), Audio Settings (VERIFIED SDL2 plugin), Input Settings (VERIFIED SDL2 plugin), Cheats (VERIFIED core CEnhancement), Enhancements (VERIFIED core CEnhancementList), ROM Info (VERIFIED core ROM), Hotkeys (PARTIAL — persistencia requiere verificación manual), ROM Browser (PARTIAL — sorting/columns pendiente).
 - Lifecycle: VERIFICADO (CloseSystem() restaurado fb6b568df). Clean exit sin SIGTERM: MANUAL VERIFICATION REQUIRED.
-- Packaging: VERIFICADO (AppImage generado). `appimagetool` recuperado de AppImageKit (`https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage`, verificado con `file`: ELF 64-bit x86_64). `AppDir` construido desde `staging/`; `AppImage` generado en `$HOME/Escritorio/Vortex64-x86_64.AppImage` (ELF x86_64, ejecutable, 2,7 MB). SHA256: `3d0d02354873f283017240da9302f1c9167cc82d589cd1a37d096ea7701fd36a`. Incluye `project64-gui`, `project64`, 4 plugins `.so`, `AppRun`, `.desktop`, icono, `Config/*.rdb`, `SDL2`. No depende de `source tree`, `build tree`, `toolbox`, rutas `$HOME/...`, Wine ni Proton. Smoke: `timeout` de inicio en entorno sin DISPLAY confirma que el binario se lanza sin crash inmediato; ejecución visual completa requiere entorno gráfico interactivo.
+- Packaging: VERIFICADO (AppImage generado). `appimagetool` recuperado de AppImageKit (`https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage`, verificado con `file`: ELF 64-bit x86_64). `AppDir` construido desde `staging/`; `AppImage` generado en `Vortex64-x86_64.AppImage` (ELF x86_64, ejecutable, 2,7 MB). SHA256: `3d0d02354873f283017240da9302f1c9167cc82d589cd1a37d096ea7701fd36a`. Incluye `project64-gui`, `project64`, 4 plugins `.so`, `AppRun`, `.desktop`, icono, `Config/*.rdb`, `SDL2`. No depende de `source tree`, `build tree`, `toolbox`, rutas `$HOME/...`, Wine ni Proton. Smoke: `timeout` de inicio en entorno sin DISPLAY confirma que el binario se lanza sin crash inmediato; ejecución visual completa requiere entorno gráfico interactivo.
 - No hay MISSING aplicable no documentado; todos los gaps conocidos están clasificados (VERIFIED / PARTIAL / MANUAL / BLOCKED) con evidencia de código.
 - WIP: auditado; submódulo sucio; sin reset; sin clean; sin destrucción.
 - No se ocultan gaps como verificados; se documenta exactamente lo pendiente.

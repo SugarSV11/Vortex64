@@ -143,3 +143,6 @@ Thumbs.db
 /install-test/
 /staging/
 /Vortex64.AppDir/
+
+# Linux build trees
+/build*/

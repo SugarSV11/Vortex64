@@ -1,55 +1,85 @@
-# Vortex64 ⚠️ BETA
+# Vortex64
 
-> **⚠️ Versión BETA** — Este es un programa en desarrollo beta. Puede contener bugs,
-> comportamiento inestable y fallas. No todos los juegos están garantizados de funcionar.
-> Úsalo bajo tu propio riesgo y reporta cualquier problema que encuentres.
+**Emulador de Nintendo 64 nativo para Linux** · *Native Nintendo 64 emulator for Linux*
 
-## ¿Qué es Vortex64?
+Vortex64 es un port a Linux nativo de la arquitectura de [Project64](https://github.com/project64/project64)
+(núcleo, RSP, recompilador) con interfaz Qt6 y backends SDL2/OpenGL. Es un binario ELF:
+**sin Wine, sin Proton**.
 
-Vortex64 es un emulador de consolas Nintendo 64 para Linux, escrito en C++.
-Se basa en la arquitectura de Project64 y está enfocado en llevar un emulador
-nativo a Linux (binario ELF, sin Wine ni Proton), usando SDL2 para el video,
-el audio (SDL2/PipeWire), el input y una primera GUI (Qt6).
+> ⚠️ **BETA.** Algunos juegos pueden fallar o ir mal. Si encuentras un fallo, abre un
+> [issue](https://github.com/SugarSV11/Vortex64/issues) con tu sistema, la versión y los pasos para reproducirlo.
 
-En esta **versión beta**:
+![Biblioteca de Vortex64](Docs/img/library.png)
+<sub>Biblioteca con ROMs de prueba falsas (sin contenido de Nintendo).</sub>
 
-- El núcleo, RSP, video (SDL2/OpenGL), audio, input, saves, save states,
-  frontend CLI y una primera GUI están funcionando y se ha verificado el
-  funcionamiento con una ROM real de extremo a extremo.
-- Aún quedan cosas pendientes: un recompiler JIT completamente terminado,
-  el video embebido en la ventana de la GUI, y el empaquetado completo
-  (AppImage / Flatpak).
-- Es una versión de prueba: es posible que algunos juegos no funcionen.
+## Características
 
-Para más detalles del estado del port a Linux, consulta [`LINUX_PORT.md`](LINUX_PORT.md).
+- Núcleo MIPS R4300i (intérprete y recompilador x86-64), RSP, TLB y saves
+- Video OpenGL con SDL2, embebido en la ventana principal (plugin propio y GLideN64 opcional)
+- Audio SDL2 / PipeWire y entrada por teclado, ratón y mandos (SDL2)
+- Interfaz Qt6: navegador de ROMs, favoritos, ajustes, trucos y mejoras, save states
+- Depurador con ventanas y scripts JavaScript
+- Soporte de ROMs `.z64`, `.n64`, `.v64` (también dentro de `.zip` y `.7z`)
+- Integración de escritorio: icono, entrada `.desktop` y asociación MIME
 
-## Cómo ejecutarlo
+## Descargar y ejecutar
 
-Este repositorio acompaña el binario `Vortex64-x86_64.AppImage` (AppImage).
-Para ejecutarlo:
+1. Descarga `Vortex64-x86_64.AppImage` desde [Releases](https://github.com/SugarSV11/Vortex64/releases).
+2. Ejecútalo:
 
 ```bash
-chmod +x Vortex64-x86_64.AppImage && ./Vortex64-x86_64.AppImage
+chmod +x Vortex64-x86_64.AppImage
+./Vortex64-x86_64.AppImage
 ```
 
-> El archivo `.AppImage` debe tener permisos de ejecución. Asegúrate de que
-> tengas una ROM **tuya propia** (sin contenido con derechos de autor de Nintendo
-> incluidos en este repositorio) para cargar dentro del emulador.
+Necesitas tus **propias ROMs**. Este proyecto no incluye ni distribuye ninguna ROM ni contenido de Nintendo.
 
-## Reportar bugs
+## Compilar desde el código
 
-Si encuentras algún fallo, abre una **Issue** en el
-[repositorio de GitHub](https://github.com/SugarSV11/Vortex64/issues)
-describiendo el problema, la versión, tu sistema y cómo reproducirlo.
-Gracias por ayudarnos a mejorar Vortex64.
+Dependencias (nombres de Fedora; en otras distros usa los equivalentes `-dev`):
+`gcc`/`g++` ≥ 13, `cmake` ≥ 3.16, `ninja-build`, `pkgconf`, `SDL2-devel`, `qt6-qtbase-devel`,
+`mesa-libGL-devel`, `pipewire-devel`, `alsa-lib-devel`, `freetype-devel`, `zlib-ng-devel`.
 
-## Licencia
+```bash
+git clone https://github.com/SugarSV11/Vortex64.git
+cd Vortex64
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+./build/bin/vortex64
+```
 
-Vortex64 es software libre basado en la arquitectura del núcleo de Project64
-y se distribuye bajo los términos de la **GNU General Public License v2 (GPLv2)**.
-Ver el archivo [`LICENSE`](LICENSE) para el texto completo.
+- `-DPJ64_GLIDEN64=OFF` desactiva el plugin de video alternativo GLideN64 (no necesita FreeType).
+- Instalación del sistema: `cmake --install build --prefix ~/.local`.
+- Detalles del port, pruebas y estado por componente: [`Docs/dev/`](Docs/dev/).
 
-Vortex64 incorpora o enlaza varias bibliotecas de terceros (GLideN64, AsmJit,
-SDL2, Duktape, Discord RPC, 7-Zip C SDK, zlib/minizip, Berkeley SoftFloat y Qt6).
-Consulta [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) y el directorio
-`licenses/` para la atribución completa.
+## Estado
+
+| Área | Estado |
+|---|---|
+| Arranque de ROM con video, audio y entrada | Funciona (verificado con ROM real) |
+| GUI Qt6 (navegador, ajustes, trucos, depurador) | Funciona; ver [`Docs/dev/PROJECT64_PARITY.md`](Docs/dev/PROJECT64_PARITY.md) para el detalle por función |
+| Recompilador (JIT) | En pruebas; el intérprete es la ruta de referencia |
+| Wayland nativo | Pendiente (hoy funciona vía Xwayland) |
+| Flatpak | Pendiente |
+
+## Documentación
+
+- [Compilar en Windows (upstream)](Docs/BUILDING-WINDOWS.md)
+- [Estado del port a Linux](Docs/dev/LINUX_PORT.md) · [Auditoría](Docs/dev/LINUX_PORT_AUDIT.md)
+- [Cambios](Docs/CHANGELOG.md) · [Carpetas de usuario](Docs/USER_FOLDERS.md) · [Soporte](Docs/SUPPORT.md)
+
+## Licencia y créditos
+
+Vortex64 es software libre bajo la **GNU GPL v2** ([`LICENSE`](LICENSE)). Se basa en **Project64**
+y usa GLideN64, AsmJit, SDL2, Duktape, Discord RPC, 7-Zip C SDK, zlib/minizip, Berkeley SoftFloat y Qt6.
+Atribución completa en [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) y en [`licenses/`](licenses/).
+Nintendo 64 es marca de Nintendo; este proyecto no está afiliado a Nintendo ni a Project64.
+
+---
+
+## English summary
+
+Vortex64 is a native Linux port of the Project64 core with a Qt6 UI and SDL2/OpenGL backends
+(no Wine/Proton). **Beta software.** Download the AppImage from
+[Releases](https://github.com/SugarSV11/Vortex64/releases), `chmod +x` it and run it; bring your own ROMs.
+Build: `cmake -S . -B build -G Ninja && cmake --build build` (see dependencies above). GPLv2.

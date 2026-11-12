@@ -419,7 +419,10 @@ set_target_properties(gliden64-test PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQU
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 target_compile_definitions(gliden64-test PRIVATE QT_NO_KEYWORDS)
 target_link_libraries(gliden64-test PRIVATE Common Project64-core Qt6::Widgets Qt6::DBus X11::X11 vendored_png discord_rpc)
-add_dependencies(gliden64-test GLideN64 Project64-video Project64-rsp Project64-audio Project64-input)
+add_dependencies(gliden64-test Project64-video Project64-rsp Project64-audio Project64-input)
+if(TARGET GLideN64)
+    add_dependencies(gliden64-test GLideN64)
+endif()
 
 # Differential test of the x64 recompiler against the interpreter (needs an X server)
 add_executable(jit-fuzz-test EXCLUDE_FROM_ALL

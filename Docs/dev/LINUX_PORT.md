@@ -1,6 +1,6 @@
 # Project64 en Linux nativo — estado del port
 
-> **Aviso (sesión Claude/Codex):** las afirmaciones de este documento sobre Cheats, Enhancements, ROM Info, Hotkeys, ROM Browser, Audio/Input/Video Settings y "sin huecos ocultos" eran incorrectas: esos manejadores solo mostraban un `QMessageBox`. El estado real y verificado está en `PROJECT64_PARITY.md`.
+> **Aviso:** las afirmaciones de este documento sobre Cheats, Enhancements, ROM Info, Hotkeys, ROM Browser, Audio/Input/Video Settings y "sin huecos ocultos" eran incorrectas: esos manejadores solo mostraban un `QMessageBox`. El estado real y verificado está en `PROJECT64_PARITY.md`.
 
 
 Este documento describe el port de Project64 a Linux nativo (Bazzite KDE / Fedora Atomic, x86_64, Wayland+Plasma, AMDGPU/Mesa) que se está construyendo en la rama `linux-port` de este repositorio (fork de `github.com/project64/project64`; el nombre `project64se` mencionado a veces no corresponde a ningún repositorio público existente).
@@ -128,7 +128,7 @@ GUI gaps real implementados (commit d28bb3987): Cheats (g_Enhancements), Enhance
 - Core/JIT: NO DESACTIVADO; intacto.
 - WIP: auditado, submódulo sucio preservado, sin reset/clean/destrucción.
 - Build release: BLOQUEADO por SDL2 faltante en host actual (entorno, no código); build existente (fb6b568) verificado: ELF x86-64 nativo, 4 plugins .so cargados.
-- Packaging: COMPLETO. AppImage generado con `appimagetool` (descargado de AppImageKit continuo oficial, verificado con `file`) en `$HOME/Escritorio/Vortex64-x86_64.AppImage` (2,7 MB, x86_64, ejecutable). SHA256: `3d0d02354873f283017240da9302f1c9167cc82d589cd1a37d096ea7701fd36a`. AppDir construido desde `staging/` con `project64-gui`, 4 plugins `.so` (`libProject64-video.so`, `audio.so`, `input.so`, `rsp.so`), `.desktop`, icono 512×512 (`project64.png`), MIME, `AppRun` y `Config/*.rdb`. RPATH auditado: no depende de `source tree`, `build tree`, `toolbox`, rutas `$HOME/...`, ni Wine/Proton.
+- Packaging: COMPLETO. AppImage generado con `appimagetool` (descargado de AppImageKit continuo oficial, verificado con `file`) en `Vortex64-x86_64.AppImage` (2,7 MB, x86_64, ejecutable). SHA256: `3d0d02354873f283017240da9302f1c9167cc82d589cd1a37d096ea7701fd36a`. AppDir construido desde `staging/` con `project64-gui`, 4 plugins `.so` (`libProject64-video.so`, `audio.so`, `input.so`, `rsp.so`), `.desktop`, icono 512×512 (`project64.png`), MIME, `AppRun` y `Config/*.rdb`. RPATH auditado: no depende de `source tree`, `build tree`, `toolbox`, rutas `$HOME/...`, ni Wine/Proton.
 - AppImage: NO EXISTE; validación no aplicable.
 - Estado final: NO se declara completo (condición packaging/AppImage/clean exit no cumplida); trabajo independiente disponible (packaging con herramientas recuperadas, verificación lifecycle manual, mejoras ROM Browser sorting/columns). No push; no reset.
 
@@ -144,7 +144,7 @@ Estado: IMPLEMENTADO (OnHotkeys conectado a QAction + g_Settings); PERSISTENCIA 
 === CLEAN SHUTDOWN ===
 Estado: VERIFICADO código (closeEvent -> CN64System::CloseSystem() con null-guard, fb6b568df). MANUAL VERIFICATION REQUIRED: cierre natural sin SIGTERM externo debe confirmarse con interacción humana en GUI real. Watchdog SIGTERM observado previamente confirma que el proceso no queda colgado indefinidamente (no hang infinito).
 === APPIMAGE EVIDENCE ===
-- Archivo: $HOME/Escritorio/Vortex64-x86_64.AppImage
+- Archivo: Vortex64-x86_64.AppImage
 - Tamaño: 2,7 MB
 - Tipo: ELF 64-bit LSB executable, x86-64
 - SHA256: 3d0d02354873f283017240da9302f1c9167cc82d589cd1a37d096ea7701fd36a
@@ -155,7 +155,7 @@ Estado: VERIFICADO código (closeEvent -> CN64System::CloseSystem() con null-gua
 - Archivos transferencia: MANIFESTO-TRANSFERENCIA.txt, SHA256SUMS, ROMS-PARA-PRUEBAS/ (preservados)
 - No reset --hard; no clean -fd; no restore .
 === FINAL STATE SUMMARY ===
-AppImage: $HOME/Escritorio/Vortex64-x86_64.AppImage (ELF x86-64, 2,7 MB, exec)
+AppImage: Vortex64-x86_64.AppImage (ELF x86-64, 2,7 MB, exec)
 SHA256: 3d0d02354873f283017240da9302f1c9167cc82d589cd1a37d096ea7701fd36a
 AppDir source: Vortex64.AppDir (staging/)
 Plugins: 4 (.so) in usr/lib/
@@ -164,7 +164,7 @@ Hotkeys persistence: MANUAL VERIFICATION REQUIRED
 Clean shutdown natural: MANUAL VERIFICATION REQUIRED
 Lifecycle code fix: VERIFICADO (fb6b568df)
 WIP/submodule preserved; no push; no destructive commands
-Docs updated: LINUX_PORT.md, LINUX_PORT_AUDIT.md, OPENCODE_HANDOFF.md
+Docs updated: LINUX_PORT.md, LINUX_PORT_AUDIT.md
 Release complete (AppImage + evidence)
 Estado AppImage actual: NO final definitivo (se requiere regenerar tras cualquier corrección de código pendiente, especialmente paintEngine)
 HANDOFF actualizado con instrumentación paintEngine.
@@ -175,5 +175,5 @@ HANDOFF actualizado con instrumentación paintEngine.
 - En la sesión X11/Xwayland real (`DISPLAY=:0`, `WAYLAND_DISPLAY=wayland-0`), tanto el inicio sin ROM como la carga de `ROMS-PARA-PRUEBAS/test.z64` produjeron **0** líneas `QWidget::paintEngine: Should no longer be called`. La carga de ROM registró `Embedded SDL/OpenGL window initialized.`, AMD Radeon RX 9060 XT y OpenGL 4.6 Mesa 26.2.2.
 - El cierre se ejercitó enviando `WM_DELETE_WINDOW` mediante `wmctrl`, no mediante señal: el proceso sin ROM y el proceso con ROM terminaron naturalmente con código 0. El `timeout` previo que dio 143 era SIGTERM del watchdog y no se usa como evidencia de cierre.
 - Release limpio: configure, build de 669 pasos e instalación desde `fedora-toolbox-42` a `/tmp/vortex64-qt6-sdl-final-staging` completaron. `file`, `ldd`, `readelf` y `nm -D` verificaron los dos frontends ELF x86_64 y los cuatro plugins; no hubo dependencias dinámicas no resueltas.
-- AppImage regenerado y probado gráficamente con la ROM local: `$HOME/Escritorio/Vortex64-x86_64.AppImage`. Incluye ambos frontends, los cuatro plugins, `Config/*.rdb`, `.desktop`, icono, MIME y `AppRun`. La prueba repitió inicialización SDL/OpenGL embebida, 0 warnings `paintEngine` y cierre natural con código 0. SHA-256: `d7e386b93fa94471c558dd92a17efa8f8f949f3f23f7e46ac351cb43dda52c24`.
+- AppImage regenerado y probado gráficamente con la ROM local: `Vortex64-x86_64.AppImage`. Incluye ambos frontends, los cuatro plugins, `Config/*.rdb`, `.desktop`, icono, MIME y `AppRun`. La prueba repitió inicialización SDL/OpenGL embebida, 0 warnings `paintEngine` y cierre natural con código 0. SHA-256: `d7e386b93fa94471c558dd92a17efa8f8f949f3f23f7e46ac351cb43dda52c24`.
 - Persistencia de hotkeys: **MANUAL VERIFICATION REQUIRED**.
