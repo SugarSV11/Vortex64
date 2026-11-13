@@ -3,6 +3,7 @@
 // assignment still works). The gamepad is a virtual device of the kernel (uinput), so no real hardware is needed.
 //
 //   input-gamepad-test            (needs write access to /dev/uinput; exit 77 when it is not there: skipped)
+#include "isolated_x_guard.h"
 #include <Common/path.h>
 #include <Vortex64-cli/LinuxNotification.h>
 #include <Vortex64-core/AppInit.h>
@@ -216,6 +217,7 @@ static void Drive()
 
 int main(int argc, char ** argv)
 {
+    RequireIsolatedX();
     QApplication App(argc, argv);
     static CLinuxNotification Notify;
     const std::string Base = CPath(CPath::MODULE_DIRECTORY).GetDirectory();

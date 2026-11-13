@@ -5,6 +5,7 @@
 //
 //   input-capture-test write     (the bindings of Player 1: the same directories)
 //   input-ingame-test <rom>
+#include "isolated_x_guard.h"
 #include "ui_test_env.h"
 #include "../../Vortex64-input/LinuxScancodes.h"
 #include "../MainWindow.h"
@@ -419,6 +420,7 @@ static void RunMatrix(MainWindow & Window, const std::string & Mode)
 
 int main(int argc, char ** argv)
 {
+    RequireIsolatedX();
     if (argc < 2)
     {
         printf("usage: %s <rom>\n", argv[0]);

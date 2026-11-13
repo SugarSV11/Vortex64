@@ -4,6 +4,7 @@
 // the emulator does, for the state of the pad with GetKeys.
 //
 //   input-e2e-test
+#include "isolated_x_guard.h"
 #include <Common/path.h>
 #include <Vortex64-cli/LinuxNotification.h>
 #include <Vortex64-core/AppInit.h>
@@ -115,6 +116,7 @@ static const Case CasesB[] = {
 
 int main(int argc, char ** argv)
 {
+    RequireIsolatedX();
     const bool SetB = argc > 1 && strcmp(argv[1], "B") == 0;
     const Case * Set = SetB ? CasesB : Cases;
     const size_t SetSize = SetB ? sizeof(CasesB) / sizeof(CasesB[0]) : sizeof(Cases) / sizeof(Cases[0]);

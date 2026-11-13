@@ -12,7 +12,7 @@ export PIPEWIRE_RUNTIME_DIR=/run/user/1000 PULSE_RUNTIME_PATH=/run/user/1000/pul
 mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME"
 Xvfb :79 -screen 0 1024x768x24 +extension GLX >"$TMP/xvfb.log" 2>&1 &
 XV=$!
-export DISPLAY=:79
+export DISPLAY=:79 VORTEX_ISOLATED_X=1
 sleep 2
 timeout -s KILL 600 "$BUILD/bin/lifecycle-test" "$ROM" 3 2>&1 | grep -E "^(cycle|plugin|recompiler|dialog|error|closing|closed|PASS|FAIL|FAILED)"
 RC=${PIPESTATUS[0]}; RC1=$RC

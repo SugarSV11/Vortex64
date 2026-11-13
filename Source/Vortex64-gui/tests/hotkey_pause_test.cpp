@@ -7,6 +7,7 @@
 // the shortcut of Pause (the user set it so) goes to the game only; a key that is only a shortcut is the shortcut's; a combination
 // (Ctrl+key) is the shortcut's and not the pad's. Part 2: Settings, the dialogs of the plugins and the others pause the game, nested
 // ones do not resume it under the dialog that stays, a game that the user paused stays paused, and every way of closing frees the pause.
+#include "isolated_x_guard.h"
 #include "ui_test_env.h"
 #include "../MainMenuID.h"
 
@@ -440,6 +441,7 @@ static void PartPause()
 
 int main(int argc, char ** argv)
 {
+    RequireIsolatedX();
     if (argc < 2)
     {
         printf("usage: %s <rom>\n", argv[0]);

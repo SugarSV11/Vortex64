@@ -4,6 +4,7 @@
 // release), then do the input (a key, a click of the left / right / middle button...), and the row has to show it.
 //
 //   input-capture-x11-test [report]     (report: print what Qt delivers for every event the filter sees)
+#include "isolated_x_guard.h"
 #include <Common/path.h>
 #include <Vortex64-cli/LinuxNotification.h>
 #include <Vortex64-core/AppInit.h>
@@ -248,6 +249,7 @@ static void Drive()
 
 int main(int argc, char ** argv)
 {
+    RequireIsolatedX();
     g_Report = argc > 1 && strcmp(argv[1], "report") == 0;
     QApplication App(argc, argv);
     g_X = XOpenDisplay(nullptr);
