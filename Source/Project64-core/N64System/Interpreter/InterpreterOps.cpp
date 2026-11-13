@@ -3596,7 +3596,7 @@ bool R4300iOp::CheckFPUInput32Conv(const float & Value)
 {
     uint32_t InvalidValueMax = 0x5a000000, InvalidMinValue = 0xda000000;
 
-    int Type = fpclassify(Value);
+    int Type = std::fpclassify(Value);
     if (Type == FP_SUBNORMAL || Type == FP_INFINITE || Type == FP_NAN ||
         Value >= *(float *)&InvalidValueMax || Value <= *(float *)&InvalidMinValue)
     {
@@ -3703,7 +3703,7 @@ bool R4300iOp::CheckFPUInput64Conv(const double & Value)
 {
     uint64_t InvalidValueMax = 0x4340000000000000, InvalidMinValue = 0xc340000000000000;
 
-    int Type = fpclassify(Value);
+    int Type = std::fpclassify(Value);
     if (Type == FP_SUBNORMAL || Type == FP_INFINITE || Type == FP_NAN ||
         Value >= *(double *)&InvalidValueMax || Value <= *(double *)&InvalidMinValue)
     {

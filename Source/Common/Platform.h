@@ -13,7 +13,7 @@
 #define _stricmp strcasecmp
 #define _strnicmp strncasecmp
 #define _snprintf snprintf
-#define _isnan isnan
+#define _isnan std::isnan
 
 // __debugbreak() is an MSVC intrinsic that traps into an attached debugger;
 // raise(SIGTRAP) is the POSIX equivalent (gdb stops on it just the same).

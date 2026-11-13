@@ -1,0 +1,9 @@
+#!/bin/sh
+HERE="$(dirname "$(readlink -f "$0")")"
+export LD_LIBRARY_PATH="$HERE/usr/lib:$HERE/usr/lib64/vortex64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export QT_PLUGIN_PATH="$HERE/usr/plugins"
+export QT_QPA_PLATFORM_PLUGIN_PATH="$HERE/usr/plugins/platforms"
+# El video OpenGL va embebido en la ventana por SDL2/X11: en Wayland funciona vía Xwayland,
+# así que se fuerza xcb (Wayland nativo está pendiente, ver README).
+export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-xcb}"
+exec "$HERE/usr/lib64/vortex64/vortex64" "$@"
