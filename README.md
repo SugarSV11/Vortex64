@@ -2,7 +2,7 @@
 
 **Emulador de Nintendo 64 nativo para Linux** · *Native Nintendo 64 emulator for Linux*
 
-Vortex64 es un port a Linux nativo de la arquitectura de [Project64](https://github.com/project64/project64)
+Vortex64 es un emulador de N64 para Linux, derivado del núcleo de [Project64](https://github.com/project64/project64)
 (núcleo, RSP, recompilador) con interfaz Qt6 y backends SDL2/OpenGL. Es un binario ELF:
 **sin Wine, sin Proton**.
 
@@ -52,6 +52,29 @@ cmake --build build
 - Instalación del sistema: `cmake --install build --prefix ~/.local`.
 - Detalles del port, pruebas y estado por componente: [`Docs/dev/`](Docs/dev/).
 
+## Tests
+
+```bash
+cmake --build build --target check   # compila los tests
+ctest --test-dir build --output-on-failure
+```
+
+La suite se ejecuta sin pantalla (Qt offscreen), con ROMs falsas de solo cabecera: menús, navegador de ROMs,
+ajustes, configuración de plugins, entrada, carga de plugins, migración desde Project64 y primer arranque.
+Los tests que necesitan pantalla real, mando o una ROM comercial están en `Scripts/linux/`
+(`run-gui-tests.sh`, `input-gamepad-test`).
+
+## AppImage portable
+
+```bash
+packaging/linux/build-appimage.sh   # genera Vortex64-x86_64.AppImage
+```
+
+Para que corra en cualquier distro (Fedora/Atomic, Ubuntu, Debian, Arch, openSUSE…) se compila en un sistema
+con glibc antigua: el workflow `.github/workflows/release.yml` lo hace en ubuntu-22.04. Las librerías se
+copian sin modificar (el `patchelf` de linuxdeploy corrompe las librerías modernas) y `check-elf-integrity.py`
+lo verifica.
+
 ## Estado
 
 | Área | Estado |
@@ -64,7 +87,7 @@ cmake --build build
 
 ## Documentación
 
-- [Compilar en Windows (upstream)](Docs/BUILDING-WINDOWS.md)
+- [Compilar y empaquetar](#compilar-desde-el-código) · [Tests](#tests)
 - [Estado del port a Linux](Docs/dev/LINUX_PORT.md) · [Auditoría](Docs/dev/LINUX_PORT_AUDIT.md)
 - [Cambios](Docs/CHANGELOG.md) · [Carpetas de usuario](Docs/USER_FOLDERS.md) · [Soporte](Docs/SUPPORT.md)
 

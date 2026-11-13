@@ -20,3 +20,7 @@ jobs:
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DPJ64_GLIDEN64=OFF
       - name: Build
         run: cmake --build build
+      - name: Tests
+        run: |
+          cmake --build build --target check
+          ctest --test-dir build --output-on-failure
