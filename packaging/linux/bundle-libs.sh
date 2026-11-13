@@ -3,9 +3,9 @@
 # SIN modificarlas. (linuxdeploy usa patchelf para cambiar el RPATH y su patchelf corrompe las
 # librerías modernas con RELR: SIGSEGV en _dl_init. AppRun usa LD_LIBRARY_PATH, no hace falta RPATH.)
 #
-# Uso: bundle-libs.sh <AppDir> <qt plugins dir>
+# Uso: bundle-libs.sh <AppDir> <qt plugins dir> [qt libs dir]
 set -euo pipefail
-APPDIR=${1:?AppDir}; QTPLUGINS=${2:?directorio de plugins de Qt}
+APPDIR=${1:?AppDir}; QTPLUGINS=${2:?directorio de plugins de Qt}; QTLIBS=${3:-}
 LIBDIR="$APPDIR/usr/lib"; PLUGDIR="$APPDIR/usr/plugins"
 APPLIB="$APPDIR/usr/lib64/vortex64"
 mkdir -p "$LIBDIR" "$PLUGDIR"
@@ -34,7 +34,7 @@ copy_deps() {
                 [[ "${stem}.so" =~ $EXCLUDE ]] && continue
                 [ -e "$LIBDIR/$base" ] && continue
                 cp -L "$path" "$LIBDIR/$base"; added=1
-            done < <(LD_LIBRARY_PATH="$LIBDIR:$APPLIB:${LD_LIBRARY_PATH:-}" ldd "$elf" 2>/dev/null | grep -E '=> /')
+            done < <(LD_LIBRARY_PATH="$LIBDIR:$APPLIB:$QTLIBS:${LD_LIBRARY_PATH:-}" ldd "$elf" 2>/dev/null | grep -E '=> /')
         done < <(find "$APPDIR/usr" -type f \( -name '*.so*' -o -perm -u+x \) -exec sh -c 'head -c4 "$1" | grep -q ELF' _ {} \; -print)
     done
 }

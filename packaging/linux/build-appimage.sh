@@ -30,7 +30,7 @@ APPIMAGETOOL="$TOOLS/appimagetool-x86_64.AppImage"
 
 echo ">> Compilando"
 cmake -S "$SRC" -B "$WORK/build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_PREFIX_PATH="$("$QMAKE" -query QT_INSTALL_PREFIX)"
+      -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib64 -DCMAKE_PREFIX_PATH="$("$QMAKE" -query QT_INSTALL_PREFIX)"
 cmake --build "$WORK/build"
 
 echo ">> Instalando en el AppDir"
@@ -38,7 +38,13 @@ rm -rf "$APPDIR"
 DESTDIR="$APPDIR" cmake --install "$WORK/build"
 
 echo ">> Empaquetando dependencias (sin modificarlas)"
-"$SRC/packaging/linux/bundle-libs.sh" "$APPDIR" "$("$QMAKE" -query QT_INSTALL_PLUGINS)"
+"$SRC/packaging/linux/bundle-libs.sh" "$APPDIR" "$("$QMAKE" -query QT_INSTALL_PLUGINS)" "$("$QMAKE" -query QT_INSTALL_LIBS)"
+
+# un AppImage hueco (sin ejecutable o sin Qt) no debe llegar a publicarse
+for must in usr/lib64/vortex64/vortex64 usr/lib64/vortex64/libVortex64-video.so usr/lib/libQt6Core.so.6 \
+            usr/lib/libQt6Widgets.so.6 usr/lib/libSDL2-2.0.so.0 usr/plugins/platforms/libqxcb.so; do
+    [ -e "$APPDIR/$must" ] || { echo "ERROR: falta $must en el AppDir"; exit 1; }
+done
 cp "$SRC/packaging/linux/AppRun" "$APPDIR/AppRun"; chmod +x "$APPDIR/AppRun"
 cp "$SRC/packaging/linux/vortex64.desktop" "$APPDIR/vortex64.desktop"
 cp "$SRC/packaging/linux/icons/vortex64-256.png" "$APPDIR/vortex64.png"
