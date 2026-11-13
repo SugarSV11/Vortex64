@@ -19,6 +19,6 @@ fi
 "$HERE/run-offscreen-tests.sh" "$BUILD" "$ROM" > "$TMP/out.txt" 2>&1
 cat "$TMP/out.txt"
 # real failures = FAIL lines that are not tolerated, tests without result, and the final FAILED of a tolerated test
-BAD=$(grep -E "no result|FAIL" "$TMP/out.txt" | grep -vE "$TOLERATED" | grep -vE "^(rombrowser: )?FAILED$|^rombrowser: FAIL" || true)
+BAD=$(grep -E "no result|FAIL" "$TMP/out.txt" | grep -vE "$TOLERATED" | grep -vE "^(rombrowser: )?FAILED$" || true)
 if [ -n "$BAD" ]; then echo "TESTS FAILED:"; echo "$BAD"; exit 1; fi
 echo "ALL TESTS PASSED"
