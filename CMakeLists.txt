@@ -170,28 +170,24 @@ install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/vortex64-mime.xml
 )
 
 # ---------------------------------------------------------------------------
-# Tests: `cmake --build build --target check` compiles every test and `ctest --test-dir build`
-# runs them. They run headless (QT_QPA_PLATFORM=offscreen); the ones that need a real display,
-# audio device or gamepad are labelled "interactive" and skipped by `ctest -LE interactive`.
+# Tests. The binaries are built by `cmake --build build --target check`; `ctest --test-dir build`
+# then runs Scripts/linux/run-offscreen-tests.sh, the suite that knows the arguments of every test
+# (headless: Qt offscreen, isolated XDG directories, header-only fake ROMs; no display, audio
+# device, gamepad or real game needed). The ones that do need them (Scripts/linux/run-gui-tests.sh,
+# input-gamepad-test, audio-test) are run by hand.
 # ---------------------------------------------------------------------------
 enable_testing()
-set(VORTEX_TESTS
-    common-test migration-test settings-test plugindir-test jit-fuzz-test debugger-test script-test
-    rombrowser-test mainmenu-test lifecycle-test present-policy-test present-sync-test
-    plugin-config-test controller-widget-test plugins-test vortex-test mainwindow-test
-    input-capture-test input-ui-test input-e2e-test)
-set(VORTEX_INTERACTIVE_TESTS input-capture-x11-test input-gamepad-test audio-test gliden64-test)
-set(VORTEX_TEST_TARGETS)
-foreach(VT ${VORTEX_TESTS} ${VORTEX_INTERACTIVE_TESTS})
+set(VORTEX_TEST_TARGETS
+    common-test migration-test first-run-test settings-test plugindir-test language-test layout-test
+    rombrowser-test mainmenu-test vortex-test present-policy-test plugin-config-test
+    controller-widget-test plugins-test input-capture-test input-ui-test)
+set(VORTEX_EXISTING_TESTS)
+foreach(VT ${VORTEX_TEST_TARGETS})
     if(TARGET ${VT})
-        list(APPEND VORTEX_TEST_TARGETS ${VT})
-        add_test(NAME ${VT} COMMAND ${VT})
-        set_tests_properties(${VT} PROPERTIES
-            ENVIRONMENT "QT_QPA_PLATFORM=offscreen;SDL_AUDIODRIVER=dummy;SDL_VIDEODRIVER=dummy"
-            TIMEOUT 120)
-        if(VT IN_LIST VORTEX_INTERACTIVE_TESTS)
-            set_tests_properties(${VT} PROPERTIES LABELS interactive)
-        endif()
+        list(APPEND VORTEX_EXISTING_TESTS ${VT})
     endif()
 endforeach()
-add_custom_target(check DEPENDS ${VORTEX_TEST_TARGETS})
+add_custom_target(check DEPENDS ${VORTEX_EXISTING_TESTS})
+add_test(NAME offscreen-suite
+    COMMAND ${CMAKE_SOURCE_DIR}/Scripts/linux/ctest-offscreen.sh ${CMAKE_BINARY_DIR})
+set_tests_properties(offscreen-suite PROPERTIES TIMEOUT 900)
