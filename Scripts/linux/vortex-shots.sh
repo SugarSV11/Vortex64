@@ -1,7 +1,7 @@
 #!/bin/bash
 # Runs vortex64 in a private Xvfb with isolated XDG directories and a library of fixtures, saving screenshots.
 #   vortex-shots.sh <build dir> <out dir> [steps]
-# The steps are those of Source/Project64-gui/Vortex/ShotScript.h.
+# The steps are those of Source/Vortex64-gui/Vortex/ShotScript.h.
 BUILD=${1:?build dir}; OUT=${2:?output dir}
 STEPS=${3:-"seed,shot:library,page:recent,shot:recent,page:favorites,shot:favorites,page:disks,select:0,shot:disks,quit"}
 TMP=$(mktemp -d)

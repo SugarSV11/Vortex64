@@ -34,22 +34,22 @@ hasta compararlo realmente.
 
 | Subsistema | Delta (líneas, sin EOL) | Estado |
 |---|---|---|
-| Project64-core | +637 −175 | clasificado archivo a archivo en `PROJECT64_PARITY_FILES.md` (sin `?`) |
-| Project64-video | +767 −355 (más ruido CRLF→LF, clase D) | clasificado en `PROJECT64_PARITY_FILES.md` |
+| Vortex64-core | +637 −175 | clasificado archivo a archivo en `PROJECT64_PARITY_FILES.md` (sin `?`) |
+| Vortex64-video | +767 −355 (más ruido CRLF→LF, clase D) | clasificado en `PROJECT64_PARITY_FILES.md` |
 | Common | +325 −23 (más ruido CRLF→LF, clase D) | clasificado en `PROJECT64_PARITY_FILES.md` |
-| Project64-rsp / rsp-core | +342 −62 | clasificado en `PROJECT64_PARITY_FILES.md` |
-| Project64-audio / input | +438 −32 | clasificado en `PROJECT64_PARITY_FILES.md` |
-| Project64-gui (Qt6) | +1074 (GUI nueva; upstream usa WTL en `Source/Project64/UserInterface`) | **L** GUI nueva (Qt en lugar de WTL); páginas de ajustes, menús, navegador, depurador y scripts portados (ver secciones siguientes); las diferencias están en `PROJECT64_PARITY_FILES.md` |
-| Project64-cli | +321 (sin equivalente upstream) | frontend Linux auxiliar |
+| Vortex64-rsp / rsp-core | +342 −62 | clasificado en `PROJECT64_PARITY_FILES.md` |
+| Vortex64-audio / input | +438 −32 | clasificado en `PROJECT64_PARITY_FILES.md` |
+| Vortex64-gui (Qt6) | +1074 (GUI nueva; upstream usa WTL en `Source/Vortex64-ui/UserInterface`) | **L** GUI nueva (Qt en lugar de WTL); páginas de ajustes, menús, navegador, depurador y scripts portados (ver secciones siguientes); las diferencias están en `PROJECT64_PARITY_FILES.md` |
+| Vortex64-cli | +321 (sin equivalente upstream) | frontend Linux auxiliar |
 | Recompilador x64 | ver «Recompilador x64» | **L** sin `BreakPoint` de stubs alcanzables; verificado con `jit-fuzz-test` y ROM reales |
 
 ## Divergencias conocidas registradas
 
-1. **Fin de línea (D):** archivos de `Project64-video` y `Common` (p. ej.
+1. **Fin de línea (D):** archivos de `Vortex64-video` y `Common` (p. ej.
    `rdp.cpp`, `path.cpp`, `ucode06.cpp`) cambiaron CRLF→LF, lo que oculta el
    delta real. Se revierte para minimizar el diff.
 2. **GUI (C):** la GUI Qt6 se escribió desde cero, no como port de
-   `Source/Project64/UserInterface`. Faltan (confirmado por prueba manual)
+   `Source/Vortex64-ui/UserInterface`. Faltan (confirmado por prueba manual)
    Settings gráficos/completos y otras funciones. No hay paridad todavía.
 3. **Plugins (C/D):** la carga es por `dlopen` con nombres por defecto
    fijos; falta descubrimiento, selección y persistencia como en upstream.
@@ -61,17 +61,17 @@ hasta compararlo realmente.
 
 - Delta `Source/` contra upstream/develop: +4477 / −690 líneas en 156 archivos
   (129 modificados, 27 nuevos). Ningún archivo de upstream ha sido borrado;
-  `Source/Project64/` (GUI WTL) sigue en el árbol sin compilarse en Linux.
+  `Source/Vortex64-ui/` (GUI WTL) sigue en el árbol sin compilarse en Linux.
 - Recompilador x64: la fusión adoptó la implementación upstream de `J()` y las
   ~500 líneas nuevas de upstream. Siguen siendo código propio de Vortex64
   (clase C: upstream mantiene `BreakPoint` stub): `SPECIAL_DIVU`,
   `SPECIAL_DMULT`, `JumpToSection`, `JumpToUnknown`.
-- Renombrado `glXxxARB` → `pj64_glXxxARB` en `Project64-video`
+- Renombrado `glXxxARB` → `pj64_glXxxARB` en `Vortex64-video`
   (`OGLcombiner.cpp`, `glitchmain.h`, …): clase **B**. Razón Linux: colisión de
   símbolos con libGL que provocaba segfault (commit 762a91265). Pendiente
   evaluar una alternativa de menor delta (macros) que mantenga las líneas
   upstream intactas.
-- GUI: upstream `Source/Project64/UserInterface` (+ `Settings/`) ≈ 11 400
+- GUI: upstream `Source/Vortex64-ui/UserInterface` (+ `Settings/`) ≈ 11 400
   líneas y 14 páginas de configuración (Options, Directories, Plugin,
   GameBrowser, KeyboardShortcuts, AdvancedOptions, Defaults, DiskDrive y las
   páginas por juego General/Plugin/Recompiler/Status/DiskDrive). La GUI Qt
@@ -161,9 +161,9 @@ eran incorrectos. Estado real tras esta sesión:
 | ROM Browser | **L** portado sobre `CRomList` del core (columnas, orden multi-clave, persistencia), probado con directorio real |
 | ROM Info | **L** portado (`RomInformation`), probado con una ROM real |
 | Recent ROMs / Recent dirs | **L** usan `File_RecentGameFile*` / `Directory_RecentGameDir*` como upstream |
-| Options › Graphics settings (`DllConfig` de Project64-video) | **L** diálogo Qt (`ConfigQt.cpp`): Basic, Emulation, Debug, Texture enhancement; prueba de ida y vuelta con `CPlugins::ConfigPlugin` |
-| Options › Audio settings (`DllConfig` de Project64-audio) | **L** diálogo Qt (`ConfigQt.cpp`), probado |
-| Options › Input settings (`DllConfig` de Project64-input) | **L** diálogo Qt (`Project64-input/ConfigQt.cpp`): 4 jugadores, Setup/Reset/Options/Shortcuts. Asignación libre: cualquier tecla física (identidad = scancode físico, X keycode→tabla de SDL; incluye Escape, Enter, Espacio, Tab, flechas, modificadores izq./der., teclado numérico, Super, signos, teclas internacionales), botones del ratón (izq., central, der., Atrás, Adelante y extras) y rueda (↑ ↓ ← →) como botones momentáneos; captura con filtro de eventos de aplicación (nada llega a los widgets mientras se espera), clic derecho en el campo → Asignar/Borrar, aviso al mover un duplicado; joystick/hotplug/zona muerta intactos; probado: `input-capture-test write/read [B]` (diálogo, dos juegos de 18 entradas, persistencia, borrado), `input-e2e-test [B]` (XTEST→SDL→`GetKeys`: 17 + 18 entradas llegan al estado N64: Escape, Enter, Espacio, Tab, flechas, Shift/Ctrl/Alt izq. y der., Super izq. y der., keypad, letras, números, ratón 1/2/3/Atrás/Adelante/6.º botón, rueda ↑↓←→) e `input-gamepad-test` (mando virtual uinput: conexión en caliente, asignación en el diálogo, `GetKeys`, desconexión y nueva conexión) |
+| Options › Graphics settings (`DllConfig` de Vortex64-video) | **L** diálogo Qt (`ConfigQt.cpp`): Basic, Emulation, Debug, Texture enhancement; prueba de ida y vuelta con `CPlugins::ConfigPlugin` |
+| Options › Audio settings (`DllConfig` de Vortex64-audio) | **L** diálogo Qt (`ConfigQt.cpp`), probado |
+| Options › Input settings (`DllConfig` de Vortex64-input) | **L** diálogo Qt (`Vortex64-input/ConfigQt.cpp`): 4 jugadores, Setup/Reset/Options/Shortcuts. Asignación libre: cualquier tecla física (identidad = scancode físico, X keycode→tabla de SDL; incluye Escape, Enter, Espacio, Tab, flechas, modificadores izq./der., teclado numérico, Super, signos, teclas internacionales), botones del ratón (izq., central, der., Atrás, Adelante y extras) y rueda (↑ ↓ ← →) como botones momentáneos; captura con filtro de eventos de aplicación (nada llega a los widgets mientras se espera), clic derecho en el campo → Asignar/Borrar, aviso al mover un duplicado; joystick/hotplug/zona muerta intactos; probado: `input-capture-test write/read [B]` (diálogo, dos juegos de 18 entradas, persistencia, borrado), `input-e2e-test [B]` (XTEST→SDL→`GetKeys`: 17 + 18 entradas llegan al estado N64: Escape, Enter, Espacio, Tab, flechas, Shift/Ctrl/Alt izq. y der., Super izq. y der., keypad, letras, números, ratón 1/2/3/Atrás/Adelante/6.º botón, rueda ↑↓←→) e `input-gamepad-test` (mando virtual uinput: conexión en caliente, asignación en el diálogo, `GetKeys`, desconexión y nueva conexión) |
 | Options › RSP settings | **N/A** el plugin RSP no exporta `DllConfig` en upstream (código comentado) |
 | Cheats / Enhancements | **L** portados (`Dialogs/CheatDialog.cpp`, `EnhancementDialog.cpp`) sobre `g_Enhancements`; árbol tri-estado probado |
 | Menú principal y atajos (`MainMenu.cpp`) | **L** `QtMainMenu` porta `FillOutMenu`/`ProcessMessage` (File, System, Options, Debugger parcial, Help, guardado por ranuras, idiomas, MRU) y usa `MenuShortCuts.cpp` de upstream; probado (`mainmenu-test`) |
@@ -176,10 +176,10 @@ eran incorrectos. Estado real tras esta sesión:
 | Ventana de soporte / ProjectSupport (códigos de supporter validados en línea con WinInet y el ID de máquina de Windows) | **E** no aplicable en Linux; Help › Support Project64 abre la web |
 | Discord Rich Presence (`DiscordRPC.cpp`, `discord-rpc`; `Setting_EnableDiscordRPC`, `CMainGui::DiscordRPCChanged`, actualización al cargar el juego y con `pj64.close()`) | **L** `DiscordRPC.cpp` de upstream compilado (solo `Timestamp()` cambia fuera de Windows) sobre la biblioteca vendida con su capa de conexión Linux (`connection_unix.cpp`: socket `discord-ipc-N` en el directorio de ejecución, también Flatpak y Snap); `mainwindow-test` con un servidor que hace de cliente de Discord (saludo con el id de aplicación, `SET_ACTIVITY` con título, inicio e icono, «Not in-game», apagado y reconexión). Sin cliente de Discord real a mano: la comprobación con Discord en pantalla queda para prueba manual |
 
-Las páginas y diálogos Qt viven en `Source/Project64-gui/Settings/`; comparten motor
+Las páginas y diálogos Qt viven en `Source/Vortex64-gui/Settings/`; comparten motor
 (`QtSettingsPage`) con las reglas de los controles "Modified" de upstream y
-`Source/Project64/Settings/UISettings.cpp` se compila sin cambios salvo
-`DPIScale()`. `Source/Project64/Plugins/PluginList.cpp` solo cambia
+`Source/Vortex64-ui/Settings/UISettings.cpp` se compila sin cambios salvo
+`DPIScale()`. `Source/Vortex64-ui/Plugins/PluginList.cpp` solo cambia
 `*.dll`/`LoadLibrary` por `*.so`/`dlopen`.
 
 ## GLideN64 como plugin de vídeo (`Source/GLideN64-linux`)
@@ -223,11 +223,11 @@ Se construyen con `ninja <destino>` (todos `EXCLUDE_FROM_ALL`) y se ejecutan con
 Última ejecución completa: todas en PASS (`run-gui-tests.sh` con la ROM de uso diario y
 `run-offscreen-tests.sh` con `ROMS-PARA-PRUEBAS/test.z64`).
 
-## Scripts del depurador (`Project64-debugger-scripts`)
+## Scripts del depurador (`Vortex64-debugger-scripts`)
 
 Motor JavaScript (duktape) de upstream: `ScriptSystem`, `ScriptInstance`, `ScriptWorker`,
 `ScriptAPI/*` y la capa de sockets/procesos/temporizadores compilados **sin reestructurar**; las
-dependencias de `<windows.h>` se cubren con `Source/Project64-gui/Debugger/ScriptShim/` (solo lo
+dependencias de `<windows.h>` se cubren con `Source/Vortex64-gui/Debugger/ScriptShim/` (solo lo
 ve ese target) y las divergencias de los archivos de upstream son `#ifdef _WIN32` literal /
 `#else` mínimo o correcciones de defectos de upstream (ver `PROJECT64_PARITY_FILES.md`).
 
@@ -278,7 +278,7 @@ gestor de ventanas real.
 
 ## Ventana principal (`CMainGui` → `MainWindow`)
 
-El auditado de `Source/Project64/UserInterface/MainWindow.cpp`/`Notification.cpp` contra la
+El auditado de `Source/Vortex64-ui/UserInterface/MainWindow.cpp`/`Notification.cpp` contra la
 ventana Qt encontró comportamientos de upstream que faltaban (ajustes que existían en Options
 pero sin efecto). Ahora portados y probados con ROM real (`mainwindow-test`, Xvfb):
 
@@ -314,15 +314,15 @@ Cada regla se escribió leyendo el diff real. Medida actual contra
 
 Divergencias accidentales (clase D) eliminadas en esta pasada:
 
-- `Project64-video/TexCache.cpp`: `printf("[TR_DUMP]...")` de la investigación
+- `Vortex64-video/TexCache.cpp`: `printf("[TR_DUMP]...")` de la investigación
   de texturas; el archivo vuelve a ser idéntico a upstream.
-- `Project64-core/Plugins/Plugin.cpp`: se había quitado
+- `Vortex64-core/Plugins/Plugin.cpp`: se había quitado
   `m_Audio->Close(m_MainWindow)` de `DestroyAudioPlugin`; restaurado (idéntico
   a upstream). `CAudioPlugin::Close` ahora detiene antes el hilo de audio.
-- `Project64-core/Plugins/AudioPlugin.cpp`: el hilo de audio llamaba
+- `Vortex64-core/Plugins/AudioPlugin.cpp`: el hilo de audio llamaba
   `AiUpdate(false)+Sleep(1)` también en Windows; ahora Windows conserva
   `AiUpdate(true)` y solo Linux sondea (el driver SDL no tiene evento de espera).
-- `Project64-rsp-core/Recompiler/RspCodeBlock.cpp`: `std::find` → `.find()`
+- `Vortex64-rsp-core/Recompiler/RspCodeBlock.cpp`: `std::find` → `.find()`
   innecesario y ruido de fin de línea; ahora solo añade `#include <algorithm>`.
 - Basura de fin de archivo (`\r` final) en `ucode00/05/06/09.cpp`, `rdp.cpp`,
   `Main.cpp`, `OGLgeometry.cpp`, `OGLglitchmain.cpp`.
@@ -373,7 +373,7 @@ está en `PROJECT64_PARITY_FILES.md`.
   `v16 += dxt; if (v16 < 0)` sobre un `int` y depende de que el desbordamiento
   se envuelva. MSVC lo hace; GCC -O3 lo trata como indefinido y rompía el
   intercambio de filas impares de toda textura cargada con LoadBlock (HUD,
-  "PRESS START", fondos). Clase **B**: `-fwrapv` en `Project64-video`
+  "PRESS START", fondos). Clase **B**: `-fwrapv` en `Vortex64-video`
   (`CMakeLists.txt`). Comprobado con volcados de textura y capturas.
 - **Datos que faltaban en el despliegue:** `Lang/`, `Config/Cheats`,
   `Config/Enhancements` y `Project64.rdx` no se copiaban ni se instalaban
@@ -397,7 +397,7 @@ acumulado). Los tests están `EXCLUDE_FROM_ALL`: hay que compilarlos explícitam
 
 ### Auditoría de Settings (2026-10-01)
 
-- Los `SettingID` que enlazan las páginas de upstream (`Source/Project64/UserInterface/Settings/*.cpp`) y las del port Qt coinciden
+- Los `SettingID` que enlazan las páginas de upstream (`Source/Vortex64-ui/UserInterface/Settings/*.cpp`) y las del port Qt coinciden
   (83 frente a 82; solo falta `Cfg_GoodName`, que upstream usa para el título del diálogo). Sin controles ficticios.
 - Barrido `settings-test sweep-write` / `sweep-read` (`run-offscreen-tests.sh`): para cada control enlazado de cada página (12 páginas:
   opciones, avanzadas, valores por defecto, plugins globales y de juego, directorios, disco, general/recompilador/disco/estado del juego,
@@ -415,7 +415,7 @@ acumulado). Los tests están `EXCLUDE_FROM_ALL`: hay que compilarlos explícitam
 - `cmake --install` instala `bin/project64{,-gui}`, `lib64/project64/` (plugins, `libGLideN64.so`, `*-qtconfig.so`, `Config/`, `Lang/`,
   `Scripts/`, `GLideN64*.ini`), `.desktop`, icono y MIME (verificado: 18 MB).
 - `Scripts/linux/test-readonly-install.sh <build> <rom>`: instala en un prefijo temporal, lo deja de solo lectura (`chmod -R a-w`), arranca
-  `project64-gui` con la ROM y XDG propios, y comprueba que corre, que el prefijo no cambia (hashes) y que la configuración va a
+  `vortex64` con la ROM y XDG propios, y comprueba que corre, que el prefijo no cambia (hashes) y que la configuración va a
   `XDG_CONFIG_HOME`. **PASS**. Los ajustes, el editor RDB (copia de usuario) y los scripts del usuario ya usan XDG.
 - AppImage: `Vortex64.AppDir/` (sin versionar) es un artefacto antiguo sin GLideN64 ni `Config`/`Lang`; no hay `appimagetool`/`linuxdeploy`
   en el entorno (habría que descargarlos), así que **no se genera un AppImage**. Pendiente para quien lo empaquete: copiar el
@@ -445,7 +445,7 @@ Diagnóstico con el KWin/XWayland real del usuario (dos monitores: 1920×1080 y 
 `spectacle` mientras `gliden64-test` alternaba ventana ↔ pantalla completa:
 
 - **GLideN64**: correcto (la resolución interna sigue al widget: 1920×1080 nítido, 4:3 con bandas).
-- **Project64-video (Glide64)**, el plugin que el usuario tiene seleccionado: **roto**. El wrapper dibujaba un bloque de
+- **Vortex64-video (Glide64)**, el plugin que el usuario tiene seleccionado: **roto**. El wrapper dibujaba un bloque de
   `g_width×g_height` (640×480) en la esquina y dejaba el resto negro (y duplicado). Corregido en `OGLglitchmain.cpp`:
   si el drawable (leído con `glXQueryDrawable`, SDL no ve los cambios de un widget ajeno) es de otro tamaño, el `swap` copia el
   bloque a una textura y lo dibuja escalado con su aspect ratio (`PJ64_PresentScaled`, estado de OpenGL guardado y restaurado);
@@ -493,7 +493,7 @@ cerrar ROM → reabrir), con ambos plugins; en la suite (`run-gui-tests.sh`).
 debugger-test, script-test y mainwindow-test terminan con exit 0 y **0 errores de ASan**; jit-fuzz-test no muestra errores pero sale por
 el límite de tiempo (ASan es ~10× más lento). Hallazgos corregidos (todos también en upstream): `unique_ptr<char>` con `new char[]` en
 `CIniFileBase` (alloc-dealloc-mismatch), `delete` de `new[]` en `CTraceLog`/`TraceSetMaxModule` y en `CRDP::free` (vtx1/vtx2/cache de
-Project64-video), llamada a un miembro sobre `g_System` nulo al cargar una ROM, `&vector[0]` de un vector vacío en `JSSocketWorker`. Faux
+Vortex64-video), llamada a un miembro sobre `g_System` nulo al cargar una ROM, `&vector[0]` de un vector vacío en `JSSocketWorker`. Faux
 positivo de ASan en libxkbcommon-x11 (`strndup`): `intercept_strndup=0`. UBSan: solo desplazamientos de negativos, enteros fuera del
 rango de `SettingID` (el valor lleva banderas), cargas sin alinear en x86 y un `memcpy(NULL,0)` de asmjit: sin consecuencias, no se tocan.
 
@@ -507,7 +507,7 @@ Hallazgos propios (pruebas con KWin real, ASan, barrido de `#ifdef _WIN32`) y de
 | Nombre de ROM de Glide64 vacío tras reabrir el renderizador (capturas `Glide64__01.png`, pack de texturas buscado en `Textures//`) | **L** `CRDP::free()` ya no lo borra |
 | `png_destroy_read_struct` en las rutas de error de escritura de PNG; `unique_ptr<uint8_t>` con `new[]` | **L** |
 | Cursor visible en pantalla completa; ordenación del navegador por columna tras reordenar; Welcome aplicaba sus opciones al cerrarlo; cheats/enhancements abiertos al terminar el juego | **L** corregido |
-| `Setting_CheckEmuRunning` sin efecto en Linux | **L** otra copia de `project64-gui` se termina (tras preguntar) como en Windows; fichero de pid en `XDG_RUNTIME_DIR`, solo mata si `/proc/<pid>/exe` es el mismo ejecutable |
+| `Setting_CheckEmuRunning` sin efecto en Linux | **L** otra copia de `vortex64` se termina (tras preguntar) como en Windows; fichero de pid en `XDG_RUNTIME_DIR`, solo mata si `/proc/<pid>/exe` es el mismo ejecutable |
 | Volumen del plugin de audio sin efecto; reinicio del buffer circular con el callback ya en marcha; mandos conectados en caliente; zona muerta 100 % | **L** corregido |
 | Cambiar el directorio de plugins no recargaba plugins con los mismos nombres | **L** corregido (también en upstream) |
 | `CThread::m_threadID` sin sincronizar | **L** atómico en Linux |

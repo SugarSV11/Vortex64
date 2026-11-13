@@ -9,7 +9,7 @@
 > `ID_FILE_REFRESHROMLIST` (Ajustes → Directorios; botón de reescaneo y F5), `ID_FILE_STARTEMULATION` («Iniciar» siempre arranca el
 > juego) y `ID_HELP_SUPPORT_PROJECT64` (validación de un servicio web de upstream, decisión D).
 
-Generado/curado a mano a partir de `Source/Project64/UserInterface` y `Source/Project64-gui` (2026-10-01).
+Generado/curado a mano a partir de `Source/Vortex64-ui/UserInterface` y `Source/Vortex64-gui` (2026-10-01).
 Estados: **L** igual o equivalente · **B** adaptación necesaria en Linux · **D** diferencia justificada · **C** sin portar (justificado) · **E** no aplicable en Linux.
 
 ## Funciones de usuario
@@ -17,7 +17,7 @@ Estados: **L** igual o equivalente · **B** adaptación necesaria en Linux · **
 | Función de upstream | Vortex64 | Estado | Diferencia | Acción |
 |---|---|---|---|---|
 | Menú File/System/Options/Debugger/Help: 95 entradas con sus `ID_*` | las 95 existen con los mismos ID, textos de idioma, atajos (`MenuShortCuts`) y estados habilitado/marcado | L | — | `mainmenu-test`, `mainwindow-test` |
-| Menú de depuración del RSP (`ID_PLUGIN_MENU`, un `HMENU` de Win32 que da el plugin RSP) | no existe | E | el depurador del RSP de upstream es Win32 (`Project64-rsp/Debugger`) | documentado |
+| Menú de depuración del RSP (`ID_PLUGIN_MENU`, un `HMENU` de Win32 que da el plugin RSP) | no existe | E | el depurador del RSP de upstream es Win32 (`Vortex64-rsp/Debugger`) | documentado |
 | Pantalla completa (`ID_OPTIONS_FULLSCREEN`), salir al perder foco, cursor oculto, barra de estado y menú ocultos | ventana Qt a pantalla completa; el plugin sigue el tamaño del widget | B | upstream cambia el modo de vídeo; aquí lo hace el compositor. Antes no se ocultaba el cursor | cursor oculto añadido; pruebas `GLIDEN64_TEST_FULLSCREEN` |
 | Volver de pantalla completa | recupera el tamaño que pidió el plugin | L | antes volvía a 640×480 | corregido |
 | Navegador de ROM: columnas, orden, ordenar por columna, menú contextual, Return, arrastrar y soltar, vigilancia del directorio, caché | portado (`QtRomBrowser`) | L | la ordenación usaba el índice visual tras reordenar columnas | corregido; `rombrowser-test` |
@@ -139,8 +139,8 @@ Estados: **L** igual o equivalente · **B** adaptación necesaria en Linux · **
 
 | Diálogo | Estado | Comprobación |
 |---|---|---|
-| Glide64 (`Project64-video/ConfigQt.cpp`, páginas Basic / Emulation / Debug / Texture enhancement) | Los 74 `IDC_*` del `.rc` de upstream están cubiertos (los que no aparecen por nombre son rótulos o los 11 combos de trazas, que están por `SettingId`); `Settings.cpp`, `Settings.h` y `SettingsID.h` son idénticos a upstream salvo 1–2 líneas; mismas listas, rangos y valores por defecto; ajustes globales (Glide64 no tiene perfil por juego en la interfaz) | `plugin-config-test video prep/write/read`: 48 controles de todas las páginas cambiados, OK, reabiertos y comparados |
+| Glide64 (`Vortex64-video/ConfigQt.cpp`, páginas Basic / Emulation / Debug / Texture enhancement) | Los 74 `IDC_*` del `.rc` de upstream están cubiertos (los que no aparecen por nombre son rótulos o los 11 combos de trazas, que están por `SettingId`); `Settings.cpp`, `Settings.h` y `SettingsID.h` son idénticos a upstream salvo 1–2 líneas; mismas listas, rangos y valores por defecto; ajustes globales (Glide64 no tiene perfil por juego en la interfaz) | `plugin-config-test video prep/write/read`: 48 controles de todas las páginas cambiados, OK, reabiertos y comparados |
 | GLideN64 (`GLideNUI` del submódulo: el mismo `ConfigDialog`/`configDialog.ui` de upstream, solo cambia `Config_linux.cpp` y la lista de resoluciones de `fullscreenresolutions_linux.cpp`) | Todas las opciones de la versión incluida; ajustes globales + perfil del juego (`GLideN64.custom.ini`, solo las diferencias); `threadedVideo`, tamaño de fuente OSD y atajos son globales por diseño de upstream | `gliden64-test` con `GLIDEN64_TEST_CONFIGRT=1`: 67 controles, OK, reabiertos y comparados |
-| Input (`Project64-input/ConfigQt.cpp`) | ver `PROJECT64_PARITY.md` | `input-capture-test`, `input-e2e-test` |
+| Input (`Vortex64-input/ConfigQt.cpp`) | ver `PROJECT64_PARITY.md` | `input-capture-test`, `input-e2e-test` |
 
 Diferencias deliberadas: en Linux no hay selector de modo de pantalla completa por resolución real (la lista sale de las pantallas de Qt y una sola frecuencia), ni "borderless/monitor" de Win32 (`M64P_GLIDENUI`/Win32 `#ifndef`).

@@ -22,7 +22,7 @@ Run() { # name rom
     local Name=$1 Rom=$2
     export XDG_CONFIG_HOME=$TMP/config-$Name XDG_DATA_HOME=$TMP/data-$Name XDG_CACHE_HOME=$TMP/cache-$Name
     mkdir -p "$XDG_CONFIG_HOME/vortex64" "$XDG_DATA_HOME"
-    printf "[Settings]\nCurrent Language=English\n[Plugin]\nGraphics Dll=libProject64-video.so\n[Game Directory]\nDirectory=%s/\nUse Selected=1\n" "$(dirname "$Rom")" > "$XDG_CONFIG_HOME/vortex64/Project64.cfg"
+    printf "[Settings]\nCurrent Language=English\n[Plugin]\nGraphics Dll=libVortex64-video.so\n[Game Directory]\nDirectory=%s/\nUse Selected=1\n" "$(dirname "$Rom")" > "$XDG_CONFIG_HOME/vortex64/Project64.cfg"
     VORTEX_VIDEO_TRACE=1 VORTEX_TEST_ROM="$Rom" VORTEX_SHOTS="$TMP/shots" VORTEX_SHOTS_STEPS="playenv,wait:4000,quit" timeout -s KILL 60 "$BUILD/bin/vortex64" 2>&1 | grep -E "^\[video\] (RomOpen|display list)" > "$TMP/$Name.log"
 }
 Check() { # name expected-size-or-empty

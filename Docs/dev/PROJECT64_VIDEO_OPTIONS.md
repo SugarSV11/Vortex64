@@ -2,11 +2,11 @@
 
 Comparación control por control contra upstream (`project64-upstream-reference`). Fuente de cada tabla: lectura del
 código de ambos lados; la parte de Settings está comprobada de forma mecánica (los `AddMod*` de upstream frente a los
-de `Source/Project64-gui/Settings`).
+de `Source/Vortex64-gui/Settings`).
 
-## 1. Project64 Video (Glide64): `Source/Project64-video/ConfigQt.cpp` frente a `Config.cpp` de upstream
+## 1. Project64 Video (Glide64): `Source/Vortex64-video/ConfigQt.cpp` frente a `Config.cpp` de upstream
 
-Los controles de upstream (`Project64-video.rc`, 4 páginas) están todos, con el mismo `SettingID`, valores, orden y
+Los controles de upstream (`Vortex64-video.rc`, 4 páginas) están todos, con el mismo `SettingID`, valores, orden y
 dependencias. Persistencia: `g_settings->WriteSettings()` (global, o la sección del juego cuando `g_romopen`, como upstream).
 Pruebas: `plugin-config-test video prep|write|read` (48 controles de todas las páginas cambiados, OK, reabiertos) y
 `gliden64-test` con `GLIDEN64_TEST_GLIDE64CFG=1` (la hoja abierta con el juego en marcha, tres veces).
@@ -157,8 +157,8 @@ Rareza de upstream (no se toca el submódulo): `Config::resetToDefaults()` no re
 
 ## 3. Settings: 64 enlaces control→SettingID
 
-`AddMod*` de `Source/Project64/UserInterface/Settings/SettingsPage-*.cpp` (65 enlaces) frente a los de
-`Source/Project64-gui/Settings/*.cpp` (64): **idénticos**, salvo que upstream enlaza `Default_DiskSeekTiming` dos veces
+`AddMod*` de `Source/Vortex64-ui/UserInterface/Settings/SettingsPage-*.cpp` (65 enlaces) frente a los de
+`Source/Vortex64-gui/Settings/*.cpp` (64): **idénticos**, salvo que upstream enlaza `Default_DiskSeekTiming` dos veces
 (una caja y después un combo; el segundo sustituye al primero) y aquí solo el combo. Todos los `SettingID` que usan las
 páginas de upstream aparecen en el código Linux. Cada control: UI → SettingID → lectura → modificación → persistencia →
 reapertura la comprueba `settings-test sweep-write/sweep-read` (64 controles cambiados, aplicados y comprobados contra el

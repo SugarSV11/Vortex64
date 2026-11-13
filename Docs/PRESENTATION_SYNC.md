@@ -16,13 +16,13 @@ The refresh rate of the monitor is **never** the speed of the emulation. The spe
 
 ## How it works
 
-* `Source/Project64-gui/PresentSync.{h,cpp}` finds the monitor that holds most of the window of the emulation (the intersection of the
+* `Source/Vortex64-gui/PresentSync.{h,cpp}` finds the monitor that holds most of the window of the emulation (the intersection of the
   window with the geometry of each `QScreen`) and reads its `refreshRate()`. A rate outside 20..1000 Hz is *not known* (0): 60 Hz is never
   made up. It follows `QWindow::screenChanged`, `QScreen::refreshRateChanged`, `screenAdded/Removed` and a 250 ms comparison (the window
   moved, the speed changed, a game started). Nothing is sent when nothing changed; the renderer is not made again.
-* It tells the video plugin with the optional export `PJ64SetPresentHint` (`Source/Project64-plugin-spec/PresentControl.h`): the mode, the
+* It tells the video plugin with the optional export `PJ64SetPresentHint` (`Source/Vortex64-plugin-spec/PresentControl.h`): the mode, the
   refresh rate (mHz), the rate of the game (mHz) and whether the emulation is unthrottled (fast forward, "limit FPS" off). The plugin
-  answers what it applied with `PJ64GetPresentStatus`. Both plugins (Glide64 = `Project64-video`, and GLideN64) implement the same two
+  answers what it applied with `PJ64GetPresentStatus`. Both plugins (Glide64 = `Vortex64-video`, and GLideN64) implement the same two
   exports with the same header-only policy, so Auto/On/Off mean the same in both. A plugin without them keeps its own box.
 * The policy (`PJ64Present::ResolveSwapInterval`, one pure function, tested):
 

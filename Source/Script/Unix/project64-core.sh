@@ -1,5 +1,5 @@
-src=./../../Project64-core
-obj=./Project64-core
+src=./../../Vortex64-core
+obj=./Vortex64-core
 
 mkdir -p $obj/Multilanguage
 mkdir -p $obj/N64System/Mips
@@ -274,5 +274,5 @@ $obj/Settings/type/TmpBool.o \
 $obj/Settings/type/TmpNumber.o \
 $obj/Settings/type/TmpString.o"
 
-echo Linking static library objects for Project64-core...
+echo Linking static library objects for Vortex64-core...
 ar rcs $obj/libproject64-core.a $OBJ_LIST

@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/about">
+        <file alias="AboutScreenLogo.bmp">../Vortex64-ui/UserInterface/Bitmaps/AboutScreenLogo.bmp</file>
+    </qresource>
+</RCC>

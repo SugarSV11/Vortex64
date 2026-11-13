@@ -161,19 +161,19 @@ if [ -x "$BUILD/bin/gliden64-test" ] && [ -f "$BUILD/bin/libGLideN64.so" ]; then
         "$TMP/minimal-wm" >/dev/null 2>&1 &
         WM=$!
         sleep 1
-        for Plugin in libGLideN64.so libProject64-video.so; do
+        for Plugin in libGLideN64.so libVortex64-video.so; do
             env GLIDEN64_TEST_CAPTURE=1 GLIDEN64_TEST_FULLSCREEN=3 GLIDEN64_TEST_SESSION=2 GLIDEN64_TEST_CHAOS=60 GLIDEN64_TEST_PLUGIN=$Plugin timeout -s KILL 600 "$BUILD/bin/gliden64-test" "$ROM" "$TMP/gliden64-captures-fs-$Plugin" 2>&1 | grep -E "^(plugin|dialog|fullscreen|FAIL|FAILED|PASS)"
             RC12=${PIPESTATUS[0]}
             [ $RC12 -ne 0 ] && RC=$RC12 && RC6=$RC12
         done
         # Glide64's own settings sheet while the game runs: the renderer is made again after it, the game goes on drawing
-        env GLIDEN64_TEST_GLIDE64CFG=1 GLIDEN64_TEST_CAPTURE=1 GLIDEN64_TEST_NO_SWITCH=1 GLIDEN64_TEST_PLUGIN=libProject64-video.so timeout -s KILL 600 "$BUILD/bin/gliden64-test" "$ROM" "$TMP/gliden64-captures-g64cfg" 2>&1 | grep -E "^(plugin|dialog|FAIL|FAILED|PASS)"
+        env GLIDEN64_TEST_GLIDE64CFG=1 GLIDEN64_TEST_CAPTURE=1 GLIDEN64_TEST_NO_SWITCH=1 GLIDEN64_TEST_PLUGIN=libVortex64-video.so timeout -s KILL 600 "$BUILD/bin/gliden64-test" "$ROM" "$TMP/gliden64-captures-g64cfg" 2>&1 | grep -E "^(plugin|dialog|FAIL|FAILED|PASS)"
         RC19=${PIPESTATUS[0]}
         [ $RC19 -ne 0 ] && RC=$RC19 && RC6=$RC19
         # the synchronization of the presentation with the monitor, with each video plugin: 60..240 Hz (VORTEX_FAKE_REFRESH) x Auto/On/Off,
         # the speed of the game, fast forward, a change of monitor while it runs, full screen three times in every mode
         if [ -x "$BUILD/bin/present-sync-test" ]; then
-            for Plugin in libGLideN64.so libProject64-video.so; do
+            for Plugin in libGLideN64.so libVortex64-video.so; do
                 timeout -s KILL 900 "$BUILD/bin/present-sync-test" "$ROM" $Plugin 2>&1 | grep -E "^(plugin|display|reference|dialog|FAIL|FAILED|PASS)"
                 RC24=${PIPESTATUS[0]}
                 [ $RC24 -ne 0 ] && RC=$RC24 && RC6=$RC24

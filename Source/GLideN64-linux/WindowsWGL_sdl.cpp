@@ -10,7 +10,7 @@
 
 bool glxDrawableSize(int & _width, int & _height); // GLXSize.cpp
 
-#include "../Project64-plugin-spec/PresentControl.h"
+#include "../Vortex64-plugin-spec/PresentControl.h"
 
 namespace {
 PJ64Present::Control s_present;
@@ -82,7 +82,7 @@ bool WindowsWGL::start()
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
 	// the context of the emulator's window: SDL treats a foreign window as an OpenGL one only
-	// with this hint (as in Project64-video)
+	// with this hint (as in Vortex64-video)
 	if (s_native != nullptr) {
 		SDL_SetHint(SDL_HINT_VIDEO_FOREIGN_WINDOW_OPENGL, "1");
 		s_window = SDL_CreateWindowFrom(s_native);
@@ -148,7 +148,7 @@ void WindowsWGL::stop()
 	}
 }
 
-// The synchronization of the presentation with the monitor (Project64-plugin-spec/PresentControl.h): the frontend sends the mode (Auto, On,
+// The synchronization of the presentation with the monitor (Vortex64-plugin-spec/PresentControl.h): the frontend sends the mode (Auto, On,
 // Off), the refresh rate of the monitor and the frame rate of the game; the swap interval of the context follows. Without a frontend the
 // setting "Vertical sync" of the plugin decides. Looked at again when the context is made again and every 120 swaps, not on every frame.
 static void applySwapInterval()

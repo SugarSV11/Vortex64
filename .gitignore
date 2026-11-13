@@ -125,11 +125,11 @@ Thumbs.db
 /Plugin64/RSP/RSP-HLE.dll
 /Save
 /Source/nragev20/Version.h
-/Source/Project64-audio/Version.h
-/Source/Project64-core/Version.h
-/Source/Project64-input/Version.h
-/Source/Project64-video/Version.h
-/Source/Project64-rsp-core/Version.h
+/Source/Vortex64-audio/Version.h
+/Source/Vortex64-core/Version.h
+/Source/Vortex64-input/Version.h
+/Source/Vortex64-video/Version.h
+/Source/Vortex64-rsp-core/Version.h
 /Plugin/Win32/GFX/GLideN64
 /Plugin/x64/GFX/GLideN64
 

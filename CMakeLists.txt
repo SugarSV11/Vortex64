@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(Project64Linux CXX C)
+project(Vortex64 CXX C)
 
 # ---------------------------------------------------------------------------
 # Linux-native desktop build.
@@ -43,13 +43,13 @@ add_subdirectory(Source/3rdParty/zlib)
 add_subdirectory(Source/3rdParty/discord-rpc)
 add_subdirectory(Source/3rdParty/zlib/contrib/minizip)
 add_subdirectory(Source/Common)
-add_subdirectory(Source/Project64-rsp-core)
-add_subdirectory(Source/Project64-core)
+add_subdirectory(Source/Vortex64-rsp-core)
+add_subdirectory(Source/Vortex64-core)
 add_subdirectory(Source/Settings)
-add_subdirectory(Source/Project64-video)
-add_subdirectory(Source/Project64-rsp)
-add_subdirectory(Source/Project64-audio)
-add_subdirectory(Source/Project64-input)
+add_subdirectory(Source/Vortex64-video)
+add_subdirectory(Source/Vortex64-rsp)
+add_subdirectory(Source/Vortex64-audio)
+add_subdirectory(Source/Vortex64-input)
 
 # GLideN64 as an alternative video plugin (the submodule is not modified, see Source/GLideN64-linux)
 option(PJ64_GLIDEN64 "Build GLideN64 as a video plugin" ON)
@@ -58,8 +58,8 @@ if(PJ64_GLIDEN64 AND EXISTS ${CMAKE_SOURCE_DIR}/Source/GLideN64/Source/src/Confi
 endif()
 
 # Frontends
-add_subdirectory(Source/Project64-cli)
-add_subdirectory(Source/Project64-gui)
+add_subdirectory(Source/Vortex64-cli)
+add_subdirectory(Source/Vortex64-gui)
 
 # Ship the real RDB databases (ucode CRC table, per-game settings, etc.)
 # next to the binary instead of leaving the runtime to create empty 0-byte
@@ -100,9 +100,9 @@ add_custom_target(copy-config-rdb ALL
 # databases) installs together into ${CMAKE_INSTALL_LIBDIR}/vortex64/
 # rather than scattering the plugins under a shared libdir: they're
 # resolved at runtime relative to CPath::MODULE_DIRECTORY (see
-# Project64-cli/main.cpp and Project64-gui/MainWindow.cpp), i.e. "next to
+# Vortex64-cli/main.cpp and Vortex64-gui/MainWindow.cpp), i.e. "next to
 # whatever binary is actually running", the same relationship they have in
-# the build tree's bin/. /usr/bin/project64[-gui] are then symlinks into
+# the build tree's bin/. /usr/bin/vortex64[-cli] are then symlinks into
 # that directory rather than copies, which works because CPath::Module()
 # resolves via /proc/self/exe - a Linux symlink target, not the symlink
 # itself, so MODULE_DIRECTORY still correctly resolves to
@@ -113,13 +113,13 @@ include(GNUInstallDirs)
 
 set(P64_INSTALL_APPDIR ${CMAKE_INSTALL_LIBDIR}/vortex64)
 
-install(TARGETS project64 project64-gui
+install(TARGETS vortex64-cli vortex64
     RUNTIME DESTINATION ${P64_INSTALL_APPDIR}
 )
-install(TARGETS Project64-video Project64-rsp Project64-audio Project64-input
+install(TARGETS Vortex64-video Vortex64-rsp Vortex64-audio Vortex64-input
     LIBRARY DESTINATION ${P64_INSTALL_APPDIR}
 )
-foreach(qtconfig Project64-video-qtconfig Project64-audio-qtconfig Project64-input-qtconfig)
+foreach(qtconfig Vortex64-video-qtconfig Vortex64-audio-qtconfig Vortex64-input-qtconfig)
     if(TARGET ${qtconfig})
         install(TARGETS ${qtconfig} LIBRARY DESTINATION ${P64_INSTALL_APPDIR})
     endif()
@@ -140,7 +140,7 @@ install(FILES ${CMAKE_SOURCE_DIR}/Scripts/example.js ${CMAKE_SOURCE_DIR}/Scripts
 )
 install(FILES ${CMAKE_SOURCE_DIR}/JS-API-Documentation.html DESTINATION ${P64_INSTALL_APPDIR})
 
-foreach(P64_SYMLINK_NAME project64 vortex64)
+foreach(P64_SYMLINK_NAME vortex64-cli vortex64)
     install(CODE "
         file(RELATIVE_PATH P64_REL_TARGET
             \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}\"
@@ -168,3 +168,30 @@ install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/icons/vortex64.svg
 install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/vortex64-mime.xml
     DESTINATION ${CMAKE_INSTALL_DATADIR}/mime/packages
 )
+
+# ---------------------------------------------------------------------------
+# Tests: `cmake --build build --target check` compiles every test and `ctest --test-dir build`
+# runs them. They run headless (QT_QPA_PLATFORM=offscreen); the ones that need a real display,
+# audio device or gamepad are labelled "interactive" and skipped by `ctest -LE interactive`.
+# ---------------------------------------------------------------------------
+enable_testing()
+set(VORTEX_TESTS
+    common-test migration-test settings-test plugindir-test jit-fuzz-test debugger-test script-test
+    rombrowser-test mainmenu-test lifecycle-test present-policy-test present-sync-test
+    plugin-config-test controller-widget-test plugins-test vortex-test mainwindow-test
+    input-capture-test input-ui-test input-e2e-test)
+set(VORTEX_INTERACTIVE_TESTS input-capture-x11-test input-gamepad-test audio-test gliden64-test)
+set(VORTEX_TEST_TARGETS)
+foreach(VT ${VORTEX_TESTS} ${VORTEX_INTERACTIVE_TESTS})
+    if(TARGET ${VT})
+        list(APPEND VORTEX_TEST_TARGETS ${VT})
+        add_test(NAME ${VT} COMMAND ${VT})
+        set_tests_properties(${VT} PROPERTIES
+            ENVIRONMENT "QT_QPA_PLATFORM=offscreen;SDL_AUDIODRIVER=dummy;SDL_VIDEODRIVER=dummy"
+            TIMEOUT 120)
+        if(VT IN_LIST VORTEX_INTERACTIVE_TESTS)
+            set_tests_properties(${VT} PROPERTIES LABELS interactive)
+        endif()
+    endif()
+endforeach()
+add_custom_target(check DEPENDS ${VORTEX_TEST_TARGETS})

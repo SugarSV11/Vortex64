@@ -11,7 +11,7 @@ General / Directorios / Gráficos / Input / Plugins, Debugger, Acerca de). Las c
 ## Arquitectura
 
 ```
-Source/Project64-gui/
+Source/Vortex64-gui/
   main.cpp                 QApplication, tema, icono, MainWindow
   MainWindow.*             ventana única: pila [Shell | vídeo]; menús y barra de estado SOLO con un juego en marcha
   Vortex/
@@ -28,7 +28,7 @@ Source/Project64-gui/
   Debugger/DebuggerShell   «Vortex64 - Debugger»: las vistas del depurador como pestañas
   Dialogs/                 Acerca de, Bienvenida, Trucos, Mejoras, Opciones de log
   RomBrowser.*             QtRomBrowser: el escáner (CRomList) — ya no se muestra
-Source/Project64-input/ConfigQt.cpp   ventana de Input (Control 1-4, Pak, Asignación / Ajustes / Prueba)
+Source/Vortex64-input/ConfigQt.cpp   ventana de Input (Control 1-4, Pak, Asignación / Ajustes / Prueba)
 ```
 
 ### Sistema visual (`Vortex/Theme`)

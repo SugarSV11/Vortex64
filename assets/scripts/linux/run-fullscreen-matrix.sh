@@ -18,7 +18,7 @@ run() { # name size scale
     "$TMP/minimal-wm" >/dev/null 2>&1 &
     local WM=$!
     sleep 1
-    for Plugin in libGLideN64.so libProject64-video.so; do
+    for Plugin in libGLideN64.so libVortex64-video.so; do
         rm -rf "$TMP/config" "$TMP/data"; mkdir -p "$TMP/config" "$TMP/data"
         local Out
         Out=$(env XDG_CONFIG_HOME=$TMP/config XDG_DATA_HOME=$TMP/data QT_SCALE_FACTOR=$Scale GLIDEN64_TEST_CAPTURE=1 GLIDEN64_TEST_FULLSCREEN=4 GLIDEN64_TEST_SESSION=1 GLIDEN64_TEST_PLUGIN=$Plugin timeout -s KILL 600 "$BUILD/bin/gliden64-test" "$ROM" "$TMP/captures-$Name-$Plugin" 2>&1 | grep -E "^(fullscreen|FAIL|FAILED|PASS)")

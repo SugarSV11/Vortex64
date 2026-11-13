@@ -112,7 +112,7 @@ def verdict(info, plugin):
     traces, display lists with triangles went through it"""
     best = max((draws(s) for s in info['shots']), key=lambda c: c[0])
     drew = best[0] >= 150 and best[1] >= 0.15
-    traced = plugin != 'libProject64-video.so' or any('display list' in l for l in info['trace'])
+    traced = plugin != 'libVortex64-video.so' or any('display list' in l for l in info['trace'])
     if not info['running']: return 'NOT RUNNING', best
     if info['exit'] != 0: return 'EXIT %d' % info['exit'], best
     if not traced: return 'NO DISPLAY LISTS', best
@@ -139,13 +139,13 @@ def main():
         rows = []
         for name, path in roms:
             h = header(path); key = ident(h); e = pdb.get(key); v = vdb.get(key)
-            combos = [('Project64 Video', 'libProject64-video.so', False), ('GLideN64', 'libGLideN64.so', False)]
-            if not quick: combos += [('Project64 Video, interpreter', 'libProject64-video.so', True)]
+            combos = [('Project64 Video', 'libVortex64-video.so', False), ('GLideN64', 'libGLideN64.so', False)]
+            if not quick: combos += [('Project64 Video, interpreter', 'libVortex64-video.so', True)]
             res = {}; trace = []
             for label, plugin, interp in combos:
                 info = run(build, path, plugin, interp, tmp, display)
                 res[label] = verdict(info, plugin)
-                if plugin == 'libProject64-video.so' and not interp: trace = info['trace']
+                if plugin == 'libVortex64-video.so' and not interp: trace = info['trace']
             rdram = (e or {}).get('RDRAM Size', '-')
             seen = next((l for l in trace if 'RomOpen' in l), '')
             m = re.search(r'RDRAM size ([0-9a-f]+) .*core ([0-9a-f]+)', seen)

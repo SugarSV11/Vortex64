@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Extracts the tooltip texts of the Windows Glide64/Project64-video
-configuration dialogs (TTSetTxt() calls in Source/Project64-video/Config.cpp)
-into Source/Project64-video/ConfigTooltips.inc, so the Qt configuration dialog
+"""Extracts the tooltip texts of the Windows Glide64/Vortex64-video
+configuration dialogs (TTSetTxt() calls in Source/Vortex64-video/Config.cpp)
+into Source/Vortex64-video/ConfigTooltips.inc, so the Qt configuration dialog
 shows exactly the same help text without retyping it.
 
-usage: Scripts/linux/gen_video_tooltips.py > Source/Project64-video/ConfigTooltips.inc
+usage: Scripts/linux/gen_video_tooltips.py > Source/Vortex64-video/ConfigTooltips.inc
 """
 import re, sys, pathlib
 
 root = pathlib.Path(__file__).resolve().parents[2]
-src = (root / "Source/Project64-video/Config.cpp").read_text(encoding="utf-8", errors="replace")
+src = (root / "Source/Vortex64-video/Config.cpp").read_text(encoding="utf-8", errors="replace")
 
 def strip_L(s):
     return re.sub(r'\bL"', '"', s)
