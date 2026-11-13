@@ -5,6 +5,9 @@ on:
     tags: ['v*']
   workflow_dispatch:
 
+permissions:
+  contents: write   # necesario para adjuntar el AppImage a la release
+
 jobs:
   appimage:
     # ubuntu-22.04 = glibc 2.35: el AppImage resultante corre en cualquier distro igual o más nueva
