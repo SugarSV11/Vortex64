@@ -30,12 +30,8 @@ public:
 private:
     std::string m_strPath;
     static void * m_hInst;
-#ifdef _WIN32
-    void * m_hFindFile;
-#else
     void * m_OpenedDir;
     std::string m_FindWildcard;
-#endif
     uint32_t m_dwFindFileAttributes;
 
 public:
@@ -68,10 +64,6 @@ public:
     }
 
     // Get path components
-#ifdef _WIN32
-    void GetDriveDirectory(std::string & rDriveDirectory) const;
-    std::string GetDriveDirectory(void) const;
-#endif
     void GetDirectory(std::string & rDirectory) const;
     std::string GetDirectory(void) const;
     void GetName(std::string & rName) const;
@@ -83,11 +75,7 @@ public:
     void GetLastDirectory(std::string & rDirectory) const;
     std::string GetLastDirectory(void) const;
     void GetFullyQualified(std::string & rFullyQualified) const;
-#ifdef _WIN32
-    void GetComponents(std::string * pDrive = nullptr, std::string * pDirectory = nullptr, std::string * pName = nullptr, std::string * pExtension = nullptr) const;
-#else
     void GetComponents(std::string * pDirectory = nullptr, std::string * pName = nullptr, std::string * pExtension = nullptr) const;
-#endif
     // Get other state
     bool IsEmpty() const
     {
@@ -96,10 +84,6 @@ public:
     bool IsRelative() const;
 
     // Set path components
-#ifdef _WIN32
-    void SetDrive(char chDrive);
-    void SetDriveDirectory(const char * lpszDriveDirectory);
-#endif
     void SetDirectory(const char * lpszDirectory, bool bEnsureAbsolute = false);
     void SetName(const char * lpszName);
     void SetName(int iName);
@@ -108,11 +92,7 @@ public:
     void SetExtension(int iExtension);
     void AppendDirectory(const char * lpszSubDirectory);
     void UpDirectory(std::string * pLastDirectory = nullptr);
-#ifdef _WIN32
-    void SetComponents(const char * lpszDrive, const char * lpszDirectory, const char * lpszName, const char * lpszExtension);
-#else
     void SetComponents(const char * lpszDirectory, const char * lpszName, const char * lpszExtension);
-#endif
     // Set whole path
     void Empty()
     {
@@ -134,9 +114,6 @@ public:
         return !IsDirectory();
     }
     bool Exists() const;
-#ifdef _WIN32
-    bool SelectFile(void * hwndOwner, const char * InitialDir, const char * FileFilter, bool FileMustExist);
-#endif
 
     // Directory operations
     bool DirectoryCreate(bool bCreateIntermediates = true);
@@ -194,7 +171,5 @@ private:
     void StripTrailingBackslash(std::string & rDirectory) const;
     void EnsureTrailingBackslash(std::string & Directory) const;
     void EnsureLeadingBackslash(std::string & Directory) const;
-#ifndef _WIN32
     bool wildcmp(const char * wild, const char * string);
-#endif
 };

@@ -19,20 +19,7 @@ void CN64System::StartEmulationThead()
 void CN64System::StartEmulationThread(CThread * thread)
 {
     WriteTrace(TraceN64System, TraceDebug, "Start");
-#ifdef _WIN32
-    if (g_Settings->LoadBool(Setting_CN64TimeCritical))
-    {
-        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
-    }
-
-    CoInitialize(nullptr);
-
     EmulationStarting(thread);
-
-    CoUninitialize();
-#else
-    EmulationStarting(thread);
-#endif
     WriteTrace(TraceN64System, TraceDebug, "Done");
 }
 

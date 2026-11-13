@@ -47,13 +47,9 @@ duk_ret_t ScriptAPI::js_pj64_open(duk_context * ctx)
 
     const char * romPath = duk_get_string(ctx, 0);
 
-#ifdef _WIN32
-    HWND hMainWindow = (HWND)g_Plugins->MainWindow()->GetWindowHandle();
-#else
     // the Linux frontend handles the script actions itself (ScriptShimHooks); asking the main
     // window for its native handle would block this (script or emulation) thread on the GUI thread
     HWND hMainWindow = nullptr;
-#endif
     char * romPathCopy = new char[strlen(romPath) + 1]; // main window proc deletes
     strcpy(romPathCopy, romPath);
     // upstream posts romPath, a string owned by duktape, which the main window then delete[]s
@@ -64,11 +60,7 @@ duk_ret_t ScriptAPI::js_pj64_open(duk_context * ctx)
 
 duk_ret_t ScriptAPI::js_pj64_close(duk_context * /*ctx*/)
 {
-#ifdef _WIN32
-    HWND hMainWindow = (HWND)g_Plugins->MainWindow()->GetWindowHandle();
-#else
     HWND hMainWindow = nullptr; // see js_pj64_open
-#endif
     PostMessage(hMainWindow, WM_JSAPI_ACTION, JSAPI_ACT_CLOSE_ROM, 0);
     return 0;
 }
@@ -78,33 +70,21 @@ duk_ret_t ScriptAPI::js_pj64_reset(duk_context * ctx)
     CheckArgs(ctx, {Arg_OptBoolean});
     bool bSoftReset = duk_get_boolean_default(ctx, 0, (duk_bool_t) false) != 0;
 
-#ifdef _WIN32
-    HWND hMainWindow = (HWND)g_Plugins->MainWindow()->GetWindowHandle();
-#else
     HWND hMainWindow = nullptr; // see js_pj64_open
-#endif
     PostMessage(hMainWindow, WM_JSAPI_ACTION, JSAPI_ACT_RESET, (WPARAM)bSoftReset);
     return 0;
 }
 
 duk_ret_t ScriptAPI::js_pj64_pause(duk_context * /*ctx*/)
 {
-#ifdef _WIN32
-    HWND hMainWindow = (HWND)g_Plugins->MainWindow()->GetWindowHandle();
-#else
     HWND hMainWindow = nullptr; // see js_pj64_open
-#endif
     PostMessage(hMainWindow, WM_JSAPI_ACTION, JSAPI_ACT_PAUSE, 0);
     return 0;
 }
 
 duk_ret_t ScriptAPI::js_pj64_resume(duk_context * /*ctx*/)
 {
-#ifdef _WIN32
-    HWND hMainWindow = (HWND)g_Plugins->MainWindow()->GetWindowHandle();
-#else
     HWND hMainWindow = nullptr; // see js_pj64_open
-#endif
     PostMessage(hMainWindow, WM_JSAPI_ACTION, JSAPI_ACT_RESUME, 0);
     return 0;
 }

@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#ifndef _WIN32
 #include <string.h>
 
 // _splitpath of the Windows CRT: there is no drive here; dir keeps its last separator
@@ -43,4 +42,3 @@ int _vscprintf(const char * format, va_list pargs)
     va_end(argcopy);
     return retval;
 }
-#endif

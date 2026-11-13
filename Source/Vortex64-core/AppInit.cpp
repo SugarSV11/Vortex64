@@ -17,9 +17,6 @@
 static void FixDirectories(void);
 void SetTraceModuleNames(void);
 
-#ifdef _WIN32
-static void IncreaseThreadPriority(void);
-#endif
 
 static CTraceFileLog * g_LogFile = nullptr;
 
@@ -223,7 +220,6 @@ bool AppInit(CNotification * Notify, const char * BaseDirectory, int argc, char 
             WriteTrace(TraceAppInit, TraceError, "No notification class passed");
             return false;
         }
-#ifndef _WIN32
         // Vortex64 keeps its files in its own folders; those of Project64 (an earlier installation) are copied once, never changed
         {
             std::string MigrationReport;
@@ -233,7 +229,6 @@ bool AppInit(CNotification * Notify, const char * BaseDirectory, int argc, char 
                 WriteTrace(TraceAppInit, TraceInfo, "Brought %d files from the folders of Project64\n%s", Copied, MigrationReport.c_str());
             }
         }
-#endif
         WriteTrace(TraceAppInit, TraceDebug, "Setting up settings");
         g_Settings = new CSettings;
         g_Settings->Initialize(BaseDirectory, AppName());
@@ -245,19 +240,6 @@ bool AppInit(CNotification * Notify, const char * BaseDirectory, int argc, char 
             return false;
         }
 
-#ifdef _WIN32
-        if (g_Settings->LoadBool(Setting_CheckEmuRunning) &&
-            pjutil::TerminatedExistingExe())
-        {
-            ShutdownSystemSettings();
-            ShutdownLogSettings();
-            ShutdownGameSettings();
-            ShutdownDebugSettings();
-            delete g_Settings;
-            g_Settings = new CSettings;
-            g_Settings->Initialize(BaseDirectory, AppName());
-        }
-#endif
 
         SetupDebugSettings();
         SetupGameSettings();
@@ -266,9 +248,6 @@ bool AppInit(CNotification * Notify, const char * BaseDirectory, int argc, char 
 
         SetupTrace();
         FixDirectories();
-#ifdef _WIN32
-        IncreaseThreadPriority();
-#endif
         g_Lang = new CLanguage();
         g_Lang->LoadCurrentStrings();
         g_Enhancements = new CEnhancements();
@@ -389,10 +368,3 @@ void FixDirectories(void)
     WriteTrace(TraceAppInit, TraceDebug, "Done");
 }
 
-#ifdef _WIN32
-#include <windows.h>
-void IncreaseThreadPriority(void)
-{
-    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
-}
-#endif

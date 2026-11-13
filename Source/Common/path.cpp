@@ -10,55 +10,29 @@
 #include <atomic>
 #include <cstring>
 
-#ifdef _WIN32
-#pragma warning(push)
-#pragma warning(disable : 4091) // warning C4091: 'typedef ': ignored on left of 'tagGPFIDL_FLAGS' when no variable is declared
-#pragma warning(disable : 4996) // warning C4091: 'typedef ': ignored on left of 'tagGPFIDL_FLAGS' when no variable is declared
-#include <Shlobj.h>
-#include <dos.h>
-
-#include <CommDlg.h>
-#pragma warning(pop)
-#else
 #include <dirent.h>
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <fcntl.h>
 #include <unistd.h>
-#endif
 #include "Platform.h"
 
 // g_ModuleLogLevel may be nullptr while AppInit() is still in session in path.cpp.
 // The added check to compare to nullptr here is at least a temporary workaround.
 
 #undef WriteTrace
-#ifdef _WIN32
-#define WriteTrace(m, s, format, ...)                                                        \
-    if (g_ModuleLogLevel != nullptr && g_ModuleLogLevel[(m)] >= (s))                         \
-    {                                                                                        \
-        WriteTraceFull((m), (s), __FILE__, __LINE__, __FUNCTION__, (format), ##__VA_ARGS__); \
-    }
-#else
 #define WriteTrace(m, s, format, ...)                                                               \
     if (g_ModuleLogLevel != nullptr && g_ModuleLogLevel[(m)] >= (s))                                \
     {                                                                                               \
         WriteTraceFull((m), (s), __FILE__, __LINE__, __PRETTY_FUNCTION__, (format), ##__VA_ARGS__); \
     }
-#endif
 
 // Constants
 
-#ifdef _WIN32
-const char DRIVE_DELIMITER = ':';
-const char * const DIR_DOUBLEDELIM = "\\\\";
-const char DIRECTORY_DELIMITER = '\\';
-const char DIRECTORY_DELIMITER2 = '/';
-#else
 const char * const DIR_DOUBLEDELIM = "//";
 const char DIRECTORY_DELIMITER = '/';
 const char DIRECTORY_DELIMITER2 = '\\';
-#endif
 const char EXTENSION_DELIMITER = '.';
 void * CPath::m_hInst = nullptr;
 
@@ -117,7 +91,6 @@ std::string CPath::XdgDataHome()
     return ".";
 }
 
-#ifndef _WIN32
 std::string CPath::UserConfigDir()
 {
     return XdgConfigHome() + "/vortex64";
@@ -299,7 +272,6 @@ int CPath::MigrateLegacyUserData(std::string * Report)
     }
     return Copied;
 }
-#endif
 
 // Initialization
 
@@ -309,31 +281,19 @@ int CPath::MigrateLegacyUserData(std::string * Report)
 inline void CPath::Init()
 {
     m_dwFindFileAttributes = 0;
-#ifdef _WIN32
-    m_hFindFile = nullptr;
-#else
     m_OpenedDir = nullptr;
     m_FindWildcard = "";
-#endif
 }
 
 // Task: Helper function for the various CPath destructors. Cleans up various internals.
 
 inline void CPath::Exit()
 {
-#ifdef _WIN32
-    if (m_hFindFile != nullptr)
-    {
-        FindClose(m_hFindFile);
-        m_hFindFile = nullptr;
-    }
-#else
     if (m_OpenedDir != nullptr)
     {
         closedir((DIR *)m_OpenedDir);
         m_OpenedDir = nullptr;
     }
-#endif
 }
 
 // Construction/Destruction
@@ -367,11 +327,7 @@ CPath::CPath(const char * lpszPath, const char * NameExten)
 {
     WriteTrace(TracePath, TraceDebug, "Start (lpszPath: \"%s\" NameExten: \"%s\")", lpszPath ? lpszPath : "(null)", NameExten ? NameExten : "(null)");
     Init();
-#ifdef _WIN32
-    SetDriveDirectory(lpszPath);
-#else
     SetDirectory(lpszPath);
-#endif
     SetNameExtension(NameExten);
     WriteTrace(TracePath, TraceDebug, "Done (m_strPath: \"%s\")", m_strPath.c_str());
 }
@@ -390,11 +346,7 @@ CPath::CPath(const std::string & strPath)
 CPath::CPath(const std::string & strPath, const char * NameExten)
 {
     Init();
-#ifdef _WIN32
-    SetDriveDirectory(strPath.c_str());
-#else
     SetDirectory(strPath.c_str(), true);
-#endif
     SetNameExtension(NameExten);
 }
 
@@ -403,11 +355,7 @@ CPath::CPath(const std::string & strPath, const char * NameExten)
 CPath::CPath(const std::string & strPath, const std::string & NameExten)
 {
     Init();
-#ifdef _WIN32
-    SetDriveDirectory(strPath.c_str());
-#else
     SetDirectory(strPath.c_str(), true);
-#endif
     SetNameExtension(NameExten.c_str());
 }
 
@@ -529,70 +477,6 @@ Do not rely on pNames being <= 8 characters, extensions
 being <= 3 characters, or drives being 1 character.
 */
 
-#ifdef _WIN32
-void CPath::GetComponents(std::string * pDrive, std::string * pDirectory, std::string * pName, std::string * pExtension) const
-{
-    WriteTrace(TracePath, TraceDebug, "Start (m_strPath: \"%s\")", m_strPath.c_str());
-
-    char buff_drive[_MAX_DRIVE + 1] = {0};
-    char buff_dir[_MAX_DIR + 1] = {0};
-    char buff_name[_MAX_FNAME + 1] = {0};
-    char buff_ext[_MAX_EXT + 1] = {0};
-
-    const char * BasePath = m_strPath.c_str();
-    const char * DriveDir = strrchr(BasePath, DRIVE_DELIMITER);
-    if (DriveDir != nullptr)
-    {
-        size_t len = sizeof(buff_dir) < (DriveDir - BasePath) ? sizeof(buff_drive) : DriveDir - BasePath;
-        strncpy(buff_drive, BasePath, len);
-        BasePath += len + 1;
-    }
-
-    const char * last = strrchr(BasePath, DIRECTORY_DELIMITER);
-    if (last != nullptr)
-    {
-        size_t len = sizeof(buff_dir) < (last - BasePath) ? sizeof(buff_dir) : last - BasePath;
-        if (len > 0)
-        {
-            strncpy(buff_dir, BasePath, len);
-        }
-        else
-        {
-            buff_dir[0] = DIRECTORY_DELIMITER;
-            buff_dir[1] = '\0';
-        }
-        strncpy(buff_name, last + 1, sizeof(buff_name));
-    }
-    else
-    {
-        strncpy(buff_dir, BasePath, sizeof(buff_dir));
-    }
-    char * ext = strrchr(buff_name, '.');
-    if (ext != nullptr)
-    {
-        strncpy(buff_ext, ext + 1, sizeof(buff_ext));
-        *ext = '\0';
-    }
-
-    if (pDrive)
-    {
-        *pDrive = buff_drive;
-    }
-    if (pDirectory)
-    {
-        *pDirectory = buff_dir;
-    }
-    if (pName)
-    {
-        *pName = buff_name;
-    }
-    if (pExtension)
-    {
-        *pExtension = buff_ext;
-    }
-    WriteTrace(TracePath, TraceDebug, "Done (dir: \"%s\" name: \"%s\" ext: \"%s\")", buff_dir, buff_name, buff_ext);
-}
-#else
 void CPath::GetComponents(std::string * pDirectory, std::string * pName, std::string * pExtension) const
 {
     WriteTrace(TracePath, TraceDebug, "Start (m_strPath: \"%s\")", m_strPath.c_str());
@@ -646,42 +530,15 @@ void CPath::GetComponents(std::string * pDirectory, std::string * pName, std::st
     }
     WriteTrace(TracePath, TraceDebug, "Done (dir: \"%s\" name: \"%s\" ext: \"%s\")", buff_dir, buff_name, buff_ext);
 }
-#endif
 
 // Task: Get drive and directory from path
 
-#ifdef _WIN32
-void CPath::GetDriveDirectory(std::string & rDriveDirectory) const
-{
-    std::string Drive;
-    std::string Directory;
-
-    GetComponents(&Drive, &Directory);
-    rDriveDirectory = Drive;
-    if (!Drive.empty())
-    {
-        rDriveDirectory += DRIVE_DELIMITER;
-    }
-    rDriveDirectory += Directory;
-}
-
-std::string CPath::GetDriveDirectory(void) const
-{
-    std::string rDriveDirectory;
-    GetDriveDirectory(rDriveDirectory);
-    return rDriveDirectory;
-}
-#endif
 
 // Task: Get directory from path
 
 void CPath::GetDirectory(std::string & rDirectory) const
 {
-#ifdef _WIN32
-    GetComponents(nullptr, &rDirectory);
-#else
     GetComponents(&rDirectory);
-#endif
 }
 
 std::string CPath::GetDirectory(void) const
@@ -698,11 +555,7 @@ void CPath::GetNameExtension(std::string & rNameExtension) const
     std::string Name;
     std::string Extension;
 
-#ifdef _WIN32
-    GetComponents(nullptr, nullptr, &Name, &Extension);
-#else
     GetComponents(nullptr, &Name, &Extension);
-#endif
     rNameExtension = Name;
     if (!Extension.empty())
     {
@@ -722,11 +575,7 @@ std::string CPath::GetNameExtension(void) const
 
 void CPath::GetName(std::string & rName) const
 {
-#ifdef _WIN32
-    GetComponents(nullptr, nullptr, &rName);
-#else
     GetComponents(nullptr, &rName);
-#endif
 }
 
 std::string CPath::GetName(void) const
@@ -740,11 +589,7 @@ std::string CPath::GetName(void) const
 
 void CPath::GetExtension(std::string & rExtension) const
 {
-#ifdef _WIN32
-    GetComponents(nullptr, nullptr, nullptr, &rExtension);
-#else
     GetComponents(nullptr, nullptr, &rExtension);
-#endif
 }
 
 std::string CPath::GetExtension(void) const
@@ -785,14 +630,6 @@ std::string CPath::GetLastDirectory(void) const
 
 void CPath::GetFullyQualified(std::string & rFullyQualified) const
 {
-#ifdef _WIN32
-    char buff_fullname[MAX_PATH];
-
-    memset(buff_fullname, 0, sizeof(buff_fullname));
-
-    _fullpath(buff_fullname, m_strPath.c_str(), MAX_PATH - 1);
-    rFullyQualified = buff_fullname;
-#endif
 }
 
 // Post: Return TRUE if path does not start from filesystem root
@@ -800,43 +637,15 @@ void CPath::GetFullyQualified(std::string & rFullyQualified) const
 
 bool CPath::IsRelative() const
 {
-#ifdef _WIN32
-    if (m_strPath.length() > 1 && m_strPath[1] == DRIVE_DELIMITER)
-    {
-        return false;
-    }
-    if (m_strPath.length() > 2 && m_strPath[0] == DIRECTORY_DELIMITER && m_strPath[1] == DIRECTORY_DELIMITER)
-    {
-        return false;
-    }
-#else
     if (m_strPath.length() > 1 && m_strPath[0] == DIRECTORY_DELIMITER)
     {
         return false;
     }
-#endif
     return true;
 }
 
 // Task: Set path components
 
-#ifdef _WIN32
-void CPath::SetComponents(const char * lpszDrive, const char * lpszDirectory, const char * lpszName, const char * lpszExtension)
-{
-    char buff_fullname[MAX_PATH];
-
-    memset(buff_fullname, 0, sizeof(buff_fullname));
-    if (lpszDirectory == nullptr || strlen(lpszDirectory) == 0)
-    {
-        static char empty_dir[] = {DIRECTORY_DELIMITER, '\0'};
-        lpszDirectory = empty_dir;
-    }
-
-    _makepath(buff_fullname, lpszDrive, lpszDirectory, lpszName, lpszExtension);
-    m_strPath.erase();
-    m_strPath = buff_fullname;
-}
-#else
 void CPath::SetComponents(const char * lpszDirectory, const char * lpszName, const char * lpszExtension)
 {
     char buff_fullname[260];
@@ -871,22 +680,9 @@ void CPath::SetComponents(const char * lpszDirectory, const char * lpszName, con
     m_strPath.erase();
     m_strPath = buff_fullname;
 }
-#endif
 
 // Task: Set path's drive
 
-#ifdef _WIN32
-void CPath::SetDrive(char chDrive)
-{
-    stdstr_f Drive("%c", chDrive);
-    std::string Directory;
-    std::string Name;
-    std::string Extension;
-
-    GetComponents(nullptr, &Directory, &Name, &Extension);
-    SetComponents(Drive.c_str(), Directory.c_str(), Name.c_str(), Extension.c_str());
-}
-#endif
 
 // Task: Set path's directory
 
@@ -906,37 +702,11 @@ void CPath::SetDirectory(const char * lpszDirectory, bool bEnsureAbsolute /*= fa
         EnsureTrailingBackslash(Directory);
     }
 
-#ifdef _WIN32
-    std::string Drive;
-    GetComponents(&Drive, nullptr, &Name, &Extension);
-    SetComponents(Drive.c_str(), Directory.c_str(), Name.c_str(), Extension.c_str());
-#else
     GetComponents(nullptr, &Name, &Extension);
     SetComponents(Directory.c_str(), Name.c_str(), Extension.c_str());
-#endif
     WriteTrace(TracePath, TraceDebug, "Done (m_strPath: \"%s\")", m_strPath.c_str());
 }
 
-#ifdef _WIN32
-
-// Task: Set path's drive and directory
-
-void CPath::SetDriveDirectory(const char * lpszDriveDirectory)
-{
-    std::string DriveDirectory = lpszDriveDirectory;
-    std::string Name;
-    std::string Extension;
-
-    if (DriveDirectory.length() > 0)
-    {
-        EnsureTrailingBackslash(DriveDirectory);
-        cleanPathString(DriveDirectory);
-    }
-
-    GetComponents(nullptr, nullptr, &Name, &Extension);
-    SetComponents(nullptr, DriveDirectory.c_str(), Name.c_str(), Extension.c_str());
-}
-#endif
 
 // Task: Set path's filename
 
@@ -945,14 +715,8 @@ void CPath::SetName(const char * lpszName)
     std::string Directory;
     std::string Extension;
 
-#ifdef _WIN32
-    std::string Drive;
-    GetComponents(&Drive, &Directory, nullptr, &Extension);
-    SetComponents(Drive.c_str(), Directory.c_str(), lpszName, Extension.c_str());
-#else
     GetComponents(&Directory, nullptr, &Extension);
     SetComponents(Directory.c_str(), lpszName, Extension.c_str());
-#endif
 }
 
 // Task: Set path's filename
@@ -967,14 +731,8 @@ void CPath::SetName(int iName)
 
     _snprintf(sName, sizeof(sName), "%d", iName);
 
-#ifdef _WIN32
-    std::string Drive;
-    GetComponents(&Drive, &Directory, nullptr, &Extension);
-    SetComponents(Drive.c_str(), Directory.c_str(), sName, Extension.c_str());
-#else
     GetComponents(&Directory, nullptr, &Extension);
     SetComponents(Directory.c_str(), sName, Extension.c_str());
-#endif
 }
 
 // Task: Set path's file extension
@@ -984,14 +742,8 @@ void CPath::SetExtension(const char * lpszExtension)
     std::string Directory;
     std::string Name;
 
-#ifdef _WIN32
-    std::string Drive;
-    GetComponents(&Drive, &Directory, &Name);
-    SetComponents(Drive.c_str(), Directory.c_str(), Name.c_str(), lpszExtension);
-#else
     GetComponents(&Directory, &Name);
     SetComponents(Directory.c_str(), Name.c_str(), lpszExtension);
-#endif
 }
 
 // Task: Set path's file extension
@@ -1006,14 +758,8 @@ void CPath::SetExtension(int iExtension)
 
     _snprintf(sExtension, sizeof(sExtension), "%d", iExtension);
 
-#ifdef _WIN32
-    std::string Drive;
-    GetComponents(&Drive, &Directory, &Name);
-    SetComponents(Drive.c_str(), Directory.c_str(), Name.c_str(), sExtension);
-#else
     GetComponents(&Directory, &Name);
     SetComponents(Directory.c_str(), Name.c_str(), sExtension);
-#endif
 }
 
 // Task: Set path's filename and extension
@@ -1022,14 +768,8 @@ void CPath::SetNameExtension(const char * lpszNameExtension)
 {
     std::string Directory;
 
-#ifdef _WIN32
-    std::string Drive;
-    GetComponents(&Drive, &Directory);
-    SetComponents(Drive.c_str(), Directory.c_str(), lpszNameExtension, nullptr);
-#else
     GetComponents(&Directory);
     SetComponents(Directory.c_str(), lpszNameExtension, nullptr);
-#endif
 }
 
 // Task: Append a subdirectory to path's directory
@@ -1050,20 +790,11 @@ void CPath::AppendDirectory(const char * lpszSubDirectory)
     StripLeadingBackslash(SubDirectory);
     EnsureTrailingBackslash(SubDirectory);
 
-#ifdef _WIN32
-    std::string Drive;
-    GetComponents(&Drive, &Directory, &Name, &Extension);
-#else
     GetComponents(&Directory, &Name, &Extension);
-#endif
     EnsureTrailingBackslash(Directory);
     Directory += SubDirectory;
 
-#ifdef _WIN32
-    SetComponents(Drive.c_str(), Directory.c_str(), Name.c_str(), Extension.c_str());
-#else
     SetComponents(Directory.c_str(), Name.c_str(), Extension.c_str());
-#endif
 }
 
 /*
@@ -1103,53 +834,14 @@ void CPath::CurrentDirectory()
 {
     Empty();
 
-#ifdef _WIN32
-    wchar_t buff_path[260];
-    memset(buff_path, 0, sizeof(buff_path));
-    ::GetCurrentDirectory(sizeof(buff_path), buff_path);
-    SetDriveDirectory(stdstr().FromUTF16(buff_path).c_str());
-#else
     char buff_path[260];
     memset(buff_path, 0, sizeof(buff_path));
     getcwd(buff_path, sizeof(buff_path));
     SetDirectory(buff_path);
-#endif
 }
 
 // Task: Set path to the name of specified module
 
-#ifdef _WIN32
-void CPath::Module(void * hInstance)
-{
-    wchar_t buff_path[MAX_PATH];
-    memset(buff_path, 0, sizeof(buff_path));
-    GetModuleFileName((HINSTANCE)hInstance, buff_path, MAX_PATH);
-    m_strPath = stdstr().FromUTF16(buff_path);
-}
-
-// Task: Set path to the name of current module
-
-void CPath::Module()
-{
-    Module(m_hInst);
-}
-
-// Task: Set path to the directory of specified module
-
-void CPath::ModuleDirectory(void * hInstance)
-{
-    Module(hInstance);
-    SetNameExtension("");
-}
-
-// Task: Set path to the directory of current module
-
-void CPath::ModuleDirectory()
-{
-    Module();
-    SetNameExtension("");
-}
-#else
 // Linux has no HINSTANCE/GetModuleFileName; resolve the running
 // executable's own path via /proc/self/exe (Linux-specific, but this is a
 // Linux-native port, not a portable-to-every-POSIX-OS one).
@@ -1182,7 +874,6 @@ void CPath::ModuleDirectory()
     Module();
     SetNameExtension("");
 }
-#endif
 
 // Post: Return TRUE if it is a directory
 // Task: Check if this path represents a directory
@@ -1208,24 +899,6 @@ use CPath::FindFirst() because that routine parses out
 bool CPath::DirectoryExists() const
 {
     WriteTrace(TracePath, TraceDebug, "m_strPath = %s", m_strPath.c_str());
-#ifdef _WIN32
-    // Create test path
-    CPath TestPath(m_strPath.c_str());
-
-    std::string DirName;
-    TestPath.UpDirectory(&DirName);
-    TestPath.SetNameExtension(DirName.c_str());
-
-    WIN32_FIND_DATA FindData;
-    HANDLE hFindFile = FindFirstFile(stdstr((const char *)TestPath).ToUTF16().c_str(), &FindData); // Find anything
-    bool res = (hFindFile != INVALID_HANDLE_VALUE);
-
-    if (hFindFile != nullptr) // Make sure we close the search
-    {
-        FindClose(hFindFile);
-    }
-
-#else
     std::string PathText;
     GetDirectory(PathText);
     StripTrailingBackslash(PathText);
@@ -1233,7 +906,6 @@ bool CPath::DirectoryExists() const
 
     struct stat fileinfo;
     bool res = stat(PathText.c_str(), &fileinfo) == 0 && S_ISDIR(fileinfo.st_mode);
-#endif
     WriteTrace(TracePath, TraceDebug, "Exist = %s", res ? "True" : "False");
     return res;
 }
@@ -1243,92 +915,17 @@ bool CPath::DirectoryExists() const
 
 bool CPath::Exists() const
 {
-#ifdef _WIN32
-    WIN32_FIND_DATA FindData;
-    HANDLE hFindFile = FindFirstFile(stdstr(m_strPath).ToUTF16().c_str(), &FindData);
-    bool bSuccess = (hFindFile != INVALID_HANDLE_VALUE);
-
-    if (hFindFile != nullptr) // Make sure we close the search
-    {
-        FindClose(hFindFile);
-    }
-
-    return bSuccess;
-#else
     struct stat statbuf;
     return stat(m_strPath.c_str(), &statbuf) == 0;
-#endif
 }
 
-#ifdef _WIN32
-bool CPath::SelectFile(void * hwndOwner, const char * InitialDir, const char * FileFilter, bool FileMustExist)
-{
-    CPath CurrentDir(CURRENT_DIRECTORY);
-
-    size_t FilterLen = 0;
-    while (FileFilter[FilterLen] != '\0' || FileFilter[FilterLen + 1] != '\0')
-    {
-        FilterLen++;
-    }
-    FilterLen += 2;
-
-    std::vector<wchar_t> FileFilterW(FilterLen);
-    MultiByteToWideChar(CP_UTF8, 0, FileFilter, (int)FilterLen, FileFilterW.data(), static_cast<int>(FilterLen));
-    std::wstring InitialDirW = stdstr(InitialDir).ToUTF16();
-
-    OPENFILENAME openfilename;
-    wchar_t FileName[MAX_PATH];
-    memset(&FileName, 0, sizeof(FileName));
-    memset(&openfilename, 0, sizeof(openfilename));
-
-    openfilename.lStructSize = sizeof(openfilename);
-    openfilename.hwndOwner = (HWND)hwndOwner;
-    openfilename.lpstrFilter = FileFilterW.data();
-    openfilename.lpstrFile = FileName;
-    openfilename.lpstrInitialDir = InitialDirW.c_str();
-    openfilename.nMaxFile = MAX_PATH;
-    openfilename.Flags = OFN_HIDEREADONLY | (FileMustExist ? OFN_FILEMUSTEXIST : 0);
-
-    bool res = GetOpenFileName(&openfilename) != 0;
-    if (CPath(CURRENT_DIRECTORY) != CurrentDir)
-    {
-        CurrentDir.ChangeDirectory();
-    }
-    if (!res)
-    {
-        return false;
-    }
-    m_strPath = stdstr().FromUTF16(FileName);
-    cleanPathString(m_strPath);
-    return true;
-}
-#endif
 
 // Post: Return TRUE on success
 // Task: Delete file
 
 bool CPath::Delete(bool bEvenIfReadOnly) const
 {
-#ifdef _WIN32
-    std::wstring FilePath = stdstr(m_strPath).ToUTF16();
-    uint32_t dwAttr = ::GetFileAttributes(FilePath.c_str());
-    if (dwAttr == (uint32_t)-1)
-    {
-        // File does not exist
-        return false;
-    }
-
-    if (((dwAttr & FILE_ATTRIBUTE_READONLY) == FILE_ATTRIBUTE_READONLY) && !bEvenIfReadOnly)
-    {
-        // File is read-only, and we're not allowed to delete it
-        return false;
-    }
-
-    SetFileAttributes(FilePath.c_str(), FILE_ATTRIBUTE_NORMAL);
-    return DeleteFile(FilePath.c_str()) != 0;
-#else
     return unlink(m_strPath.c_str()) == 0;
-#endif
 }
 
 /*
@@ -1346,29 +943,6 @@ bool CPath::CopyTo(const char * lpcszTargetFile, bool bOverwrite)
         return false;
     }
     WriteTrace(TracePath, TraceDebug, "Copy \"%s\" to \"%s\"", m_strPath.c_str(), lpcszTargetFile);
-#ifdef _WIN32
-    // Check if the target file exists
-    CPath TargetFile(lpcszTargetFile);
-    if (TargetFile.Exists())
-    {
-        // Yeah there is already such a target file
-        // Decide if we should overwrite
-        if (!bOverwrite)
-        {
-            return false;
-        }
-
-        // Delete any previous target
-        if (!TargetFile.Delete(true))
-        {
-            return false;
-        }
-    }
-
-    // CopyFile will set the target's attributes to the same as
-    // the source after copying
-    return CopyFile(stdstr(m_strPath).ToUTF16().c_str(), stdstr(lpcszTargetFile).ToUTF16().c_str(), !bOverwrite) != 0;
-#else
 
     bool res = true;
     WriteTrace(TracePath, TraceDebug, "Opening \"%s\" for reading", m_strPath.c_str());
@@ -1452,7 +1026,6 @@ bool CPath::CopyTo(const char * lpcszTargetFile, bool bOverwrite)
     }
     WriteTrace(TracePath, TraceDebug, "Done, res: %s", res ? "true" : "false");
     return res;
-#endif
 }
 
 // Post: Return TRUE on success, false if there is such a target file
@@ -1461,29 +1034,7 @@ bool CPath::CopyTo(const char * lpcszTargetFile, bool bOverwrite)
 
 bool CPath::MoveTo(const char * lpcszTargetFile, bool bOverwrite)
 {
-#ifdef _WIN32
-    // Check if the target file exists
-    CPath TargetFile(lpcszTargetFile);
-    if (TargetFile.Exists())
-    {
-        // Yeah there is already such a target file
-        // Decide if we should overwrite
-        if (!bOverwrite)
-        {
-            return false;
-        }
-
-        // Delete any previous target
-        if (!TargetFile.Delete(TRUE))
-        {
-            return false;
-        }
-    }
-
-    return MoveFile(stdstr(m_strPath).ToUTF16().c_str(), stdstr(lpcszTargetFile).ToUTF16().c_str()) != 0;
-#else
     return false;
-#endif
 }
 
 // Post: Return TRUE if attributes match
@@ -1530,38 +1081,6 @@ bool CPath::FindFirst(uint32_t dwAttributes /*= FIND_ATTRIBUTE_FILES*/)
     Exit();
 
     m_dwFindFileAttributes = dwAttributes;
-#ifdef _WIN32
-    BOOL bGotFile;
-    BOOL bWantSubdirectory = (BOOL)(FIND_ATTRIBUTE_SUBDIR & dwAttributes);
-
-    // Finding first candidate file
-    WIN32_FIND_DATA FindData;
-    m_hFindFile = FindFirstFile(stdstr(m_strPath).ToUTF16().c_str(), &FindData);
-    bGotFile = (m_hFindFile != INVALID_HANDLE_VALUE);
-
-    while (bGotFile)
-    {
-        // Compare candidate to attributes, and filter out the "." and ".." folders
-        if (!AttributesMatch(m_dwFindFileAttributes, FindData.dwFileAttributes))
-            goto LABEL_GetAnother;
-        if (bWantSubdirectory && (FindData.cFileName[0] == '.'))
-            goto LABEL_GetAnother;
-
-        // Found a match, prepare result
-        if ((FIND_ATTRIBUTE_SUBDIR & FindData.dwFileAttributes) != 0)
-            StripTrailingBackslash(m_strPath);
-
-        SetNameExtension(stdstr().FromUTF16(FindData.cFileName).c_str());
-
-        if ((FIND_ATTRIBUTE_SUBDIR & FindData.dwFileAttributes) != 0)
-            EnsureTrailingBackslash(m_strPath);
-        return TRUE;
-
-        // Not found a match, get another
-    LABEL_GetAnother:
-        bGotFile = FindNextFile(m_hFindFile, &FindData);
-    }
-#else
     std::string Directory, Name, Extension;
     GetComponents(&Directory, &Name, &Extension);
 
@@ -1575,7 +1094,6 @@ bool CPath::FindFirst(uint32_t dwAttributes /*= FIND_ATTRIBUTE_FILES*/)
     m_OpenedDir = opendir(Directory.c_str());
     if (m_OpenedDir == nullptr) return false;
     return FindNext();
-#endif
     return false;
 }
 
@@ -1584,48 +1102,6 @@ bool CPath::FindFirst(uint32_t dwAttributes /*= FIND_ATTRIBUTE_FILES*/)
 
 bool CPath::FindNext()
 {
-#ifdef _WIN32
-    if (m_hFindFile == nullptr)
-    {
-        return false;
-    }
-
-    WIN32_FIND_DATA FindData;
-    while (FindNextFile(m_hFindFile, &FindData) != false)
-    { // while(FindNext(...))
-        if (AttributesMatch(m_dwFindFileAttributes, FindData.dwFileAttributes))
-        { // if(AttributesMatch(...)
-            if ((_A_SUBDIR & FindData.dwFileAttributes) == _A_SUBDIR)
-            {
-                if (IsDirectory())
-                {
-                    // Found a directory
-                    UpDirectory();
-                }
-                else
-                {
-                    SetNameExtension("");
-                }
-                AppendDirectory(stdstr().FromUTF16(FindData.cFileName).c_str());
-            }
-            else
-            {
-                // Found a file
-                if (IsDirectory())
-                {
-                    // Found a directory
-                    UpDirectory();
-                }
-                SetNameExtension(stdstr().FromUTF16(FindData.cFileName).c_str());
-            }
-            if ((_A_SUBDIR & FindData.dwFileAttributes) == _A_SUBDIR)
-            {
-                EnsureTrailingBackslash(m_strPath);
-            }
-            return TRUE;
-        }
-    }
-#else
     dirent * pEntry;
     while ((pEntry = readdir((DIR *)m_OpenedDir)))
     {
@@ -1674,7 +1150,6 @@ bool CPath::FindNext()
         }
         return true;
     }
-#endif
     return false;
 }
 
@@ -1683,26 +1158,15 @@ bool CPath::FindNext()
 
 bool CPath::ChangeDirectory()
 {
-#ifdef _WIN32
-    std::string DriveDirectory;
-    GetDriveDirectory(DriveDirectory);
-
-    return SetCurrentDirectory(stdstr(DriveDirectory).ToUTF16().c_str()) != 0;
-#else
     std::string Dir;
     GetDirectory(Dir);
 
     return chdir(Dir.c_str()) == 0;
-#endif
 }
 
 CPath & CPath::NormalizePath(CPath BaseDir)
 {
-#ifdef _WIN32
-    stdstr Directory = BaseDir.GetDriveDirectory();
-#else
     stdstr Directory = BaseDir.GetDirectory();
-#endif
     bool Changed = false;
     if (IsRelative())
     {
@@ -1735,11 +1199,7 @@ CPath & CPath::NormalizePath(CPath BaseDir)
         {
             Directory += *itr + DIRECTORY_DELIMITER;
         }
-#ifdef _WIN32
-        SetDriveDirectory(Directory.c_str());
-#else
         SetDirectory(Directory.c_str());
-#endif
     }
     return *this;
 }
@@ -1760,12 +1220,6 @@ bool CPath::DirectoryCreate(bool bCreateIntermediates /*= TRUE*/)
         return true;
     }
 
-#ifdef _WIN32
-    GetDriveDirectory(PathText);
-    StripTrailingBackslash(PathText);
-    WriteTrace(TracePath, TraceDebug, "Create %s", PathText.c_str());
-    bSuccess = ::CreateDirectory(stdstr(PathText).ToUTF16().c_str(), nullptr) != 0;
-#else
     GetDirectory(PathText);
     StripTrailingBackslash(PathText);
     WriteTrace(TracePath, TraceDebug, "Create %s", PathText.c_str());
@@ -1774,7 +1228,6 @@ bool CPath::DirectoryCreate(bool bCreateIntermediates /*= TRUE*/)
     {
         WriteTrace(TracePath, TraceWarning, "Failed to create \"%s\" errno: %d", PathText.c_str(), errno);
     }
-#endif
     if (!bSuccess && bCreateIntermediates)
     {
         WriteTrace(TracePath, TraceDebug, "Failed creating intermediates");
@@ -1898,7 +1351,6 @@ void CPath::EnsureLeadingBackslash(std::string & Directory) const
     }
 }
 
-#ifndef _WIN32
 bool CPath::wildcmp(const char * wild, const char * string)
 {
     const char *cp = nullptr, *mp = nullptr;
@@ -1942,4 +1394,3 @@ bool CPath::wildcmp(const char * wild, const char * string)
     }
     return !*wild;
 }
-#endif

@@ -9,13 +9,7 @@
 // GNU/GPLv2 licensed: https://gnu.org/licenses/gpl-2.0.html
 
 #include <Common/Util.h>
-#ifdef _WIN32
-#include <Vortex64-audio/Driver/DirectSound.h>
-#elif defined(ANDROID)
-#include <Vortex64-audio/Driver/OpenSLES.h>
-#else
 #include <Vortex64-audio/Driver/SDLAudio.h>
-#endif
 #include <Vortex64-plugin-spec/Audio.h>
 #include "Version.h"
 #include <stdio.h>
@@ -23,16 +17,11 @@
 #include "AudioSettings.h"
 #include "trace.h"
 #include "AudioMain.h"
-#ifndef _WIN32
 #include <dlfcn.h>
 #include <string>
-#endif
 #include "ConfigUI.h"
 #include "SettingsID.h"
 
-#ifdef _WIN32
-void SetTimerResolution ( void );
-#endif
 
 #define ENDIAN_SWAP_BYTE    (~0 & 0x7 & 3)
 #define BES(address)    ((address) ^ ENDIAN_SWAP_BYTE)
@@ -44,13 +33,7 @@ bool g_PluginInit = false;
 bool g_romopen = false;
 uint32_t g_Dacrate = 0, hack = 0;
 
-#ifdef _WIN32
-DirectSoundDriver * g_SoundDriver = nullptr;
-#elif defined(ANDROID)
-OpenSLESDriver * g_SoundDriver = nullptr;
-#else
 SDLAudioDriver * g_SoundDriver = nullptr;
-#endif
 
 enum SYSTEM_TYPE
 {
@@ -197,9 +180,6 @@ EXPORT void CALL DllAbout(void * /*hParent*/)
 
 EXPORT void CALL DllConfig(void * hParent)
 {
-#ifdef _WIN32
-    ConfigAudio(hParent);
-#else
     // Linux: the property sheet is implemented with Qt6 in ConfigQt.cpp, built
     // as libVortex64-audio-qtconfig.so next to this plugin and loaded on
     // demand so that the plugin itself has no Qt dependency.
@@ -223,7 +203,6 @@ EXPORT void CALL DllConfig(void * hParent)
         QtConfig(hParent);
     }
     dlclose(Module);
-#endif
     if (g_SoundDriver)
     {
         g_SoundDriver->SetVolume(g_settings->GetVolume());
@@ -256,17 +235,8 @@ EXPORT int32_t CALL InitiateAudio(AUDIO_INFO Audio_Info)
         g_SoundDriver->AI_Shutdown();
         delete g_SoundDriver;
     }
-#ifdef _WIN32
-    SetTimerResolution();
-#endif
     g_AudioInfo = Audio_Info;
-#ifdef _WIN32
-    g_SoundDriver = new DirectSoundDriver;
-#elif defined(ANDROID)
-    g_SoundDriver = new OpenSLESDriver;
-#else
     g_SoundDriver = new SDLAudioDriver;
-#endif
     const uint16_t cart_ID = 0x0000
         | (g_AudioInfo.HEADER[BES(0x3C)] << 8)
         | (g_AudioInfo.HEADER[BES(0x3D)] << 0)
@@ -306,28 +276,9 @@ EXPORT void CALL ProcessAList(void)
     WriteTrace(TraceAudioInterface, TraceDebug, "Called");
 }
 
-#ifdef _WIN32
-#include <Windows.h>
-#endif
 
 extern "C" void UseUnregisteredSetting(int /*SettingID*/)
 {
     WriteTrace(TraceAudioInterface, TraceDebug, "Called");
-#ifdef _WIN32
-    DebugBreak();
-#endif
 }
 
-#ifdef _WIN32
-void SetTimerResolution(void)
-{
-    HMODULE hMod = GetModuleHandle(L"ntdll.dll");
-    if (hMod != nullptr)
-    {
-        typedef LONG(NTAPI* tNtSetTimerResolution)(IN ULONG DesiredResolution, IN BOOLEAN SetResolution, OUT PULONG CurrentResolution);
-        tNtSetTimerResolution NtSetTimerResolution = (tNtSetTimerResolution)GetProcAddress(hMod, "NtSetTimerResolution");
-        ULONG CurrentResolution = 0;
-        NtSetTimerResolution(10000, TRUE, &CurrentResolution);
-    }
-}
-#endif

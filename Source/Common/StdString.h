@@ -50,13 +50,6 @@ public:
     stdstr_f(const char * strFormat, ...);
 };
 
-#ifdef _WIN32
-class stdwstr_f : public std::wstring
-{
-public:
-    stdwstr_f(const wchar_t * strFormat, ...);
-};
-#endif
 
 typedef std::list<stdstr> strlist;
 typedef strlist::iterator strlist_iter;

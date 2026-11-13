@@ -1,6 +1,5 @@
 #pragma once
 
-#ifndef _WIN32
 #include <alloca.h>
 #include <cmath>
 #include <cstdio>
@@ -49,7 +48,6 @@ typedef const char * LPCSTR;
 typedef unsigned long ULONG;
 void _splitpath(const char * path, char * drive, char * dir, char * fname, char * ext);
 
-#endif
 
 // 7z archives as ROMs: upstream enables them for Windows only (its other target, Android, has no
 // C7zip), but the decoder (3rdParty/7zip) builds on Linux too

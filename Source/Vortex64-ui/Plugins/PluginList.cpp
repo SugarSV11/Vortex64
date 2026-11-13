@@ -2,9 +2,6 @@
 
 #include "PluginList.h"
 #include <Vortex64-core/Plugins/PluginBase.h>
-#ifdef _WIN32
-#include <io.h>
-#else
 // Linux: plugins are shared objects loaded with dlopen()/dlsym() (through
 // Common/DynamicLibrary), everything else in this file is unchanged.
 #include <Common/DynamicLibrary.h>
@@ -15,7 +12,6 @@ typedef const char * LPCSTR;
 #define LoadLibrary(Name) DynamicLibraryOpen(Name, false)
 #define GetProcAddress(Lib, Name) DynamicLibraryGetProc(Lib, Name)
 #define FreeLibrary(Lib) DynamicLibraryClose(Lib)
-#endif
 #ifndef PLUGIN_FILE_MASK
 #define PLUGIN_FILE_MASK "*.dll"
 #endif
@@ -83,21 +79,12 @@ void CPluginList::AddPluginFromDir(CPath Dir)
 
             //UINT LastErrorMode = SetErrorMode( SEM_FAILCRITICALERRORS );
             WriteTrace(TraceUserInterface, TraceDebug, "Loading %s", (LPCSTR)Dir);
-#ifdef _WIN32
-            hLib = LoadLibrary(stdstr((LPCSTR)Dir).ToUTF16().c_str());
-#else
             hLib = LoadLibrary((const char *)Dir);
-#endif
             //SetErrorMode(LastErrorMode);
 
             if (hLib == nullptr)
             {
-#ifdef _WIN32
-                DWORD LoadError = GetLastError();
-                WriteTrace(TraceUserInterface, TraceDebug, "Failed to load %s (error: %d)", (LPCSTR)Dir, LoadError);
-#else
                 WriteTrace(TraceUserInterface, TraceDebug, "Failed to load %s", (const char *)Dir);
-#endif
                 continue;
             }
 

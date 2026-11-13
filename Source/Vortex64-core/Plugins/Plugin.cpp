@@ -379,14 +379,10 @@ bool CPlugins::Initiate(CN64System * System)
 
 bool CPlugins::ResetInUiThread(CN64System * System)
 {
-#ifdef _WIN32
-    return m_MainWindow->ResetPluginsInUiThread(this, System);
-#else
     // Windows resets the plugins from the thread that owns the window. Here the video
     // plugin embeds itself into the frontend's window (GetWindowHandle() marshals to the
     // GUI thread), so the emulation thread can reset them itself.
     return Reset(System);
-#endif
 }
 
 bool CPlugins::Reset(CN64System * System)

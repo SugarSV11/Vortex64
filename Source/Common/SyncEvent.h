@@ -22,9 +22,7 @@ protected:
     SyncEvent & operator=(const SyncEvent &);
 
     void * m_Event;
-#ifndef _WIN32
     void * m_cond;
     bool m_signalled;
     bool m_manualReset;
-#endif
 };

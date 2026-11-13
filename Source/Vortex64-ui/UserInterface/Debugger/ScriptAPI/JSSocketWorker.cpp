@@ -260,9 +260,6 @@ bool CJSSocketWorker::ProcConnect()
             return false;
         }
 
-#ifdef _WIN32
-        rc = connect(m_Socket, ptr->ai_addr, (int)ptr->ai_addrlen);
-#else
         // A blocking connect() to an address that does not answer keeps this thread for minutes,
         // and the script system joins it (holding the lock of the emulation callbacks) when the
         // script stops: the connection is awaited in slices that look at the stop request
@@ -302,7 +299,6 @@ bool CJSSocketWorker::ProcConnect()
                 }
             }
         }
-#endif
 
         if (rc != SOCKET_ERROR)
         {

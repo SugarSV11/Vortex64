@@ -10,10 +10,6 @@
 #include <Vortex64-rsp-core/cpu/RspSystem.h>
 #include <Settings/Settings.h>
 
-#if defined(_MSC_VER)
-#include <Windows.h>
-#include <intrin.h>
-#endif
 
 RSP_INFO RSPInfo;
 uint32_t RdramSize = 0;
@@ -27,34 +23,6 @@ void DetectCpuSpecs(void)
     uint32_t Intel_Features = 0;
     uint32_t AMD_Features = 0;
 
-#if defined(_MSC_VER)
-    __try
-    {
-#ifdef _M_IX86
-        _asm {
-            // Intel features
-            mov eax, 1
-            cpuid
-            mov[Intel_Features], edx
-
-                // AMD features
-            mov eax, 80000001h
-            cpuid
-            or [AMD_Features], edx
-        }
-#else
-        int cpuInfo[4];
-        __cpuid(cpuInfo, 1);
-        Intel_Features = cpuInfo[3];
-        __cpuid(cpuInfo, 0x80000001);
-        AMD_Features = cpuInfo[3];
-#endif
-    }
-    __except (EXCEPTION_EXECUTE_HANDLER)
-    {
-        AMD_Features = Intel_Features = 0;
-    }
-#else
 
     /*
     TODO: With GCC, there is <cpuid.h>, but __cpuid() there is a macro and
@@ -62,7 +30,6 @@ void DetectCpuSpecs(void)
     */
 
     AMD_Features = Intel_Features = 0;
-#endif
 
 #if defined(__i386__) || defined(_M_IX86)
     if (Intel_Features & 0x02000000)

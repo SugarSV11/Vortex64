@@ -24,9 +24,6 @@ void CMempak::LoadMempak(int32_t Control, bool Create)
     {
         MempakPath.AppendDirectory(g_Settings->LoadStringVal(Game_UniqueSaveDir).c_str());
     }
-#ifdef _WIN32
-    MempakPath.NormalizePath(CPath(CPath::MODULE_DIRECTORY));
-#endif
 
     if (!Create && !MempakPath.Exists())
     {

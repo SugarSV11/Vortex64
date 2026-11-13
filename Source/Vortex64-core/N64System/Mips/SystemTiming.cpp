@@ -1,8 +1,6 @@
 #include "stdafx.h"
 
-#ifndef _WIN32
 #include <cxxabi.h>
-#endif
 #include <Vortex64-core/3rdParty/zip.h>
 #include <Vortex64-core/N64System/MemoryHandler/AudioInterfaceHandler.h>
 #include <Vortex64-core/N64System/Mips/Disk.h>
@@ -241,14 +239,12 @@ void CSystemTimer::TimerDone()
         {
             m_System.RefreshScreen();
         }
-#ifndef _WIN32
         catch (const __cxxabiv1::__forced_unwind &)
         {
             // the emulation thread is cancelled (plugin change, end of the game) inside the plugin's screen update:
             // the unwinding has to go on
             throw;
         }
-#endif
         catch (...)
         {
             WriteTrace(TraceN64System, TraceError, "Exception caught\nFile: %s\nLine: %d", __FILE__, __LINE__);

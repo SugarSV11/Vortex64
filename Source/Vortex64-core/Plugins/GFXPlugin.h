@@ -23,10 +23,6 @@ public:
     void(CALL * ViStatusChanged)(void);
     void(CALL * ViWidthChanged)(void);
     void(CALL * SoftReset)(void);
-#ifdef ANDROID
-    void(CALL * SurfaceCreated)(void);
-    void(CALL * SurfaceChanged)(int w, int h);
-#endif
 
     // How the presentation is synchronized with the monitor (optional: a plugin without them keeps its own setting)
     void(CALL * PJ64SetPresentHint)(const PJ64_PRESENT_HINT * Hint);
@@ -57,9 +53,6 @@ private:
     bool Initiate_1_4(CN64System * System, RenderWindow * Window);
     bool Initiate_1_5(CN64System * System, RenderWindow * Window);
 
-#ifdef ANDROID
-    static void SwapBuffers(void);
-#endif
     static void CALL DummyDrawScreen(void)
     {
     }

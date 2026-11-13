@@ -2,12 +2,9 @@
 
 #include "SettingsType-RomDatabase.h"
 #include <Common/path.h>
-#ifndef _WIN32
 #include <filesystem>
 #include <unistd.h>
-#endif
 
-#ifndef _WIN32
 // The RDB editor (Setting_RdbEditor) writes into the database files themselves.
 // Upstream ships them next to the executable and edits them in place; on Linux the
 // installation must not need to be writable (read-only installs, AppImage,
@@ -52,12 +49,6 @@ std::string CSettingTypeRomDatabase::DatabasePath(const std::string & ShippedPat
     }
     return UserPath.string();
 }
-#else
-std::string CSettingTypeRomDatabase::DatabasePath(const std::string & ShippedPath)
-{
-    return ShippedPath;
-}
-#endif
 
 CIniFile * CSettingTypeRomDatabase::m_SettingsIniFile = nullptr;
 CIniFile * CSettingTypeRomDatabase::m_VideoIniFile = nullptr;

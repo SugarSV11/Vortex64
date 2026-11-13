@@ -25,10 +25,8 @@
 #include <sys/ucontext.h>
 #endif
 
-#ifndef _WIN32
 #include <signal.h>
 // siginfo_t
-#endif
 
 /*
 * TODO:  Have address translation functions here?

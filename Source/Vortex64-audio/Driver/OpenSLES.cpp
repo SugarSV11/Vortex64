@@ -13,20 +13,7 @@
 #include <Vortex64-audio/SettingsID.h>
 #include <Vortex64-audio/AudioMain.h>
 
-#ifdef ANDROID
-#include <SLES/OpenSLES.h>
-#include <SLES/OpenSLES_Android.h>
-#endif
 
-#ifdef ANDROID
-typedef struct threadLock_
-{
-    pthread_mutex_t mutex;
-    pthread_cond_t  cond;
-    volatile unsigned char value;
-    volatile unsigned char limit;
-} threadLock;
-#endif
 
 // Default start-time size of primary buffer (in equivalent output samples)
 // This is the buffer where audio is loaded after it's extracted from N64's memory
@@ -86,24 +73,6 @@ int g_OutputFreq = 44100;
 // Indicate that the audio plugin failed to initialize, so the emulator can keep running without sound
 bool g_critical_failure = false;
 
-#ifdef ANDROID
-// Thread lock
-threadLock g_lock;
-
-// Engine interfaces
-SLObjectItf g_engineObject = nullptr;
-SLEngineItf g_engineEngine = nullptr;
-
-// Output mix interfaces
-SLObjectItf g_outputMixObject = nullptr;
-
-// Player interfaces
-SLObjectItf g_playerObject = nullptr;
-SLPlayItf g_playerPlay = nullptr;
-
-// Buffer queue interfaces
-SLAndroidSimpleBufferQueueItf g_bufferQueue = nullptr;
-#endif
 
 static bool CreatePrimaryBuffer(void)
 {
@@ -159,45 +128,6 @@ static void CloseAudio(void)
         delete[] g_secondaryBuffers;
         g_secondaryBuffers = nullptr;
     }
-#ifdef ANDROID
-    // Destroy buffer queue audio player object, and invalidate all associated interfaces
-    if (g_playerObject != nullptr)
-    {
-        SLuint32 state = SL_PLAYSTATE_PLAYING;
-        (*g_playerPlay)->SetPlayState(g_playerPlay, SL_PLAYSTATE_STOPPED);
-
-        while (state != SL_PLAYSTATE_STOPPED)
-        {
-            (*g_playerPlay)->GetPlayState(g_playerPlay, &state);
-        }
-
-        (*g_playerObject)->Destroy(g_playerObject);
-        g_playerObject = nullptr;
-        g_playerPlay = nullptr;
-        g_bufferQueue = nullptr;
-    }
-
-    // Destroy output mix object, and invalidate all associated interfaces
-    if (g_outputMixObject != nullptr)
-    {
-        (*g_outputMixObject)->Destroy(g_outputMixObject);
-        g_outputMixObject = nullptr;
-    }
-
-    // Destroy engine object, and invalidate all associated interfaces
-    if (g_engineObject != nullptr)
-    {
-        (*g_engineObject)->Destroy(g_engineObject);
-        g_engineObject = nullptr;
-        g_engineEngine = nullptr;
-    }
-
-    // Destroy thread locks
-    pthread_cond_signal(&(g_lock.cond));
-    pthread_mutex_unlock(&(g_lock.mutex));
-    pthread_cond_destroy(&(g_lock.cond));
-    pthread_mutex_destroy(&(g_lock.mutex));
-#endif
     WriteTrace(TraceAudioInitShutdown, TraceDebug, "Done");
 }
 
@@ -344,21 +274,6 @@ static int resample(unsigned char *input, int /*input_avail*/, int oldsamplerate
 }
 
 // This callback handler is called every time a buffer finishes playing
-#ifdef ANDROID
-void queueCallback(SLAndroidSimpleBufferQueueItf caller, void *context)
-{
-    threadLock *plock = (threadLock *)context;
-
-    pthread_mutex_lock(&(plock->mutex));
-
-    if (plock->value < plock->limit)
-        plock->value++;
-
-    pthread_cond_signal(&(plock->cond));
-
-    pthread_mutex_unlock(&(plock->mutex));
-}
-#endif
 
 void OpenSLESDriver::AI_SetFrequency(uint32_t freq, uint32_t /*BufferSize*/)
 {
@@ -387,29 +302,6 @@ void OpenSLESDriver::AI_SetFrequency(uint32_t freq, uint32_t /*BufferSize*/)
     // This is important for the sync
     g_GameFreq = freq;
 
-#ifdef ANDROID
-    SLuint32 sample_rate;
-    if ((freq / 1000) <= 11)
-    {
-        g_OutputFreq = 11025;
-        sample_rate = SL_SAMPLINGRATE_11_025;
-    }
-    else if ((freq / 1000) <= 22)
-    {
-        g_OutputFreq = 22050;
-        sample_rate = SL_SAMPLINGRATE_22_05;
-    }
-    else if ((freq / 1000) <= 32)
-    {
-        g_OutputFreq = 32000;
-        sample_rate = SL_SAMPLINGRATE_32;
-    }
-    else
-    {
-        g_OutputFreq = 44100;
-        sample_rate = SL_SAMPLINGRATE_44_1;
-    }
-#endif
 
     WriteTrace(TraceAudioInitShutdown, TraceInfo, "Requesting frequency: %iHz.", g_OutputFreq);
 
@@ -436,152 +328,6 @@ void OpenSLESDriver::AI_SetFrequency(uint32_t freq, uint32_t /*BufferSize*/)
         return;
     }
 
-#ifdef ANDROID
-    // Create thread locks to ensure synchronization between callback and processing code
-    if (pthread_mutex_init(&(g_lock.mutex), (pthread_mutexattr_t*)nullptr) != 0)
-    {
-        WriteTrace(TraceAudioInitShutdown, TraceError, "pthread_mutex_init failed");
-        CloseAudio();
-        g_critical_failure = true;
-        WriteTrace(TraceAudioInitShutdown, TraceDebug, "Done");
-        return;
-    }
-    if (pthread_cond_init(&(g_lock.cond), (pthread_condattr_t*)nullptr) != 0)
-    {
-        WriteTrace(TraceAudioInitShutdown, TraceError, "pthread_cond_init failed");
-        CloseAudio();
-        g_critical_failure = true;
-        WriteTrace(TraceAudioInitShutdown, TraceDebug, "Done");
-        return;
-    }
-    pthread_mutex_lock(&(g_lock.mutex));
-    g_lock.value = g_lock.limit = SECONDARY_BUFFER_NBR;
-    pthread_mutex_unlock(&(g_lock.mutex));
-
-    // Engine object
-    SLresult result = slCreateEngine(&g_engineObject, 0, nullptr, 0, nullptr, nullptr);
-    if (result != SL_RESULT_SUCCESS)
-    {
-        WriteTrace(TraceAudioInitShutdown, TraceError, "slCreateEngine failed (result: %d)", result);
-    }
-
-    if (result == SL_RESULT_SUCCESS)
-    {
-        result = (*g_engineObject)->Realize(g_engineObject, SL_BOOLEAN_FALSE);
-        if (result != SL_RESULT_SUCCESS)
-        {
-            WriteTrace(TraceAudioInitShutdown, TraceError, "slCreateEngine->Realize failed (result: %d)", result);
-        }
-    }
-
-    if (result == SL_RESULT_SUCCESS)
-    {
-        result = (*g_engineObject)->GetInterface(g_engineObject, SL_IID_ENGINE, &g_engineEngine);
-        if (result != SL_RESULT_SUCCESS)
-        {
-            WriteTrace(TraceAudioInitShutdown, TraceError, "slCreateEngine->GetInterface failed (result: %d)", result);
-        }
-    }
-
-    if (result == SL_RESULT_SUCCESS)
-    {
-        // Output mix object
-        result = (*g_engineEngine)->CreateOutputMix(g_engineEngine, &g_outputMixObject, 0, nullptr, nullptr);
-        if (result != SL_RESULT_SUCCESS)
-        {
-            WriteTrace(TraceAudioInitShutdown, TraceError, "slCreateEngine->CreateOutputMix failed (result: %d)", result);
-        }
-    }
-
-    if (result == SL_RESULT_SUCCESS)
-    {
-        result = (*g_outputMixObject)->Realize(g_outputMixObject, SL_BOOLEAN_FALSE);
-        if (result != SL_RESULT_SUCCESS)
-        {
-            WriteTrace(TraceAudioInitShutdown, TraceError, "g_outputMixObject->Realize failed (result: %d)", result);
-        }
-    }
-
-    if (result == SL_RESULT_SUCCESS)
-    {
-        SLDataLocator_AndroidSimpleBufferQueue loc_bufq = { SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, SECONDARY_BUFFER_NBR };
-
-        SLDataFormat_PCM format_pcm = { SL_DATAFORMAT_PCM,2, sample_rate, SL_PCMSAMPLEFORMAT_FIXED_16, SL_PCMSAMPLEFORMAT_FIXED_16,
-            (SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT), SL_BYTEORDER_LITTLEENDIAN };
-
-        SLDataSource audioSrc = { &loc_bufq, &format_pcm };
-
-        // Configure audio sink
-        SLDataLocator_OutputMix loc_outmix = { SL_DATALOCATOR_OUTPUTMIX, g_outputMixObject };
-        SLDataSink audioSnk = { &loc_outmix, nullptr };
-
-        // Create audio player
-        const SLInterfaceID ids1[] = { SL_IID_ANDROIDSIMPLEBUFFERQUEUE };
-        const SLboolean req1[] = { SL_BOOLEAN_TRUE };
-        result = (*g_engineEngine)->CreateAudioPlayer(g_engineEngine, &(g_playerObject), &audioSrc, &audioSnk, 1, ids1, req1);
-        if (result != SL_RESULT_SUCCESS)
-        {
-            WriteTrace(TraceAudioInitShutdown, TraceError, "g_engineEngine->CreateAudioPlayer failed (result: %d)", result);
-        }
-    }
-
-    // Realize the player
-    if (result == SL_RESULT_SUCCESS)
-    {
-        result = (*g_playerObject)->Realize(g_playerObject, SL_BOOLEAN_FALSE);
-        if (result != SL_RESULT_SUCCESS)
-        {
-            WriteTrace(TraceAudioInitShutdown, TraceError, "g_playerObject->Realize failed (result: %d)", result);
-        }
-    }
-
-    // Get the play interface
-    if (result == SL_RESULT_SUCCESS)
-    {
-        result = (*g_playerObject)->GetInterface(g_playerObject, SL_IID_PLAY, &(g_playerPlay));
-        if (result != SL_RESULT_SUCCESS)
-        {
-            WriteTrace(TraceAudioInitShutdown, TraceError, "g_playerObject->GetInterface(SL_IID_PLAY) failed (result: %d)", result);
-        }
-    }
-
-    // Get the buffer queue interface
-    if (result == SL_RESULT_SUCCESS)
-    {
-        result = (*g_playerObject)->GetInterface(g_playerObject, SL_IID_ANDROIDSIMPLEBUFFERQUEUE, &(g_bufferQueue));
-        if (result != SL_RESULT_SUCCESS)
-        {
-            WriteTrace(TraceAudioInitShutdown, TraceError, "g_playerObject->GetInterface(SL_IID_ANDROIDSIMPLEBUFFERQUEUE) failed (result: %d)", result);
-        }
-    }
-
-    // Register callback on the buffer queue
-    if (result == SL_RESULT_SUCCESS)
-    {
-        result = (*g_bufferQueue)->RegisterCallback(g_bufferQueue, queueCallback, &g_lock);
-        if (result != SL_RESULT_SUCCESS)
-        {
-            WriteTrace(TraceAudioInitShutdown, TraceError, "bufferQueue->RegisterCallback() failed (result: %d)", result);
-        }
-    }
-
-    // Set the player's state to playing
-    if (result == SL_RESULT_SUCCESS)
-    {
-        result = (*g_playerPlay)->SetPlayState(g_playerPlay, SL_PLAYSTATE_PLAYING);
-        if (result != SL_RESULT_SUCCESS)
-        {
-            WriteTrace(TraceAudioInitShutdown, TraceError, "g_playerPlay->SetPlayState(SL_PLAYSTATE_PLAYING) failed (result: %d)", result);
-        }
-    }
-
-    if (result != SL_RESULT_SUCCESS)
-    {
-        WriteTrace(TraceAudioInitShutdown, TraceNotice, "Couldn't open OpenSLES audio");
-        CloseAudio();
-        g_critical_failure = true;
-    }
-#endif
     WriteTrace(TraceAudioInitShutdown, TraceNotice, "Done");
 }
 
@@ -630,27 +376,11 @@ void OpenSLESDriver::AI_LenChanged(uint8_t *start, uint32_t length)
         WriteTrace(TraceAudioInterface, TraceDebug, "newsamplerate = %d", newsamplerate);
         WriteTrace(TraceAudioInterface, TraceDebug, "((g_secondaryBufferBytes * oldsamplerate) / newsamplerate) = %d", ((g_secondaryBufferBytes * oldsamplerate) / newsamplerate));
         WriteTrace(TraceAudioInterface, TraceDebug, "g_primaryBufferPos= %d", g_primaryBufferPos);
-#ifdef ANDROID
-        pthread_mutex_lock(&(g_lock.mutex));
-
-        // Wait for the next callback if no more output buffers available
-        while (g_lock.value == 0)
-        {
-            pthread_cond_wait(&(g_lock.cond), &(g_lock.mutex));
-        }
-
-        g_lock.value--;
-
-        pthread_mutex_unlock(&(g_lock.mutex));
-#endif
         WriteTrace(TraceAudioInterface, TraceDebug, "Finished with lock");
 
         // TODO: Don't resample if speed_factor = 100 and newsamplerate ~= oldsamplerate
         int input_used = resample(g_primaryBuffer, g_primaryBufferPos, oldsamplerate, g_secondaryBuffers[g_secondaryBufferIndex], g_secondaryBufferBytes, newsamplerate);
 
-#ifdef ANDROID
-        (*g_bufferQueue)->Enqueue(g_bufferQueue, g_secondaryBuffers[g_secondaryBufferIndex], g_secondaryBufferBytes);
-#endif
         memmove(g_primaryBuffer, &g_primaryBuffer[input_used], g_primaryBufferPos - input_used);
         g_primaryBufferPos -= input_used;
 

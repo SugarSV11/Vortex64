@@ -11,17 +11,10 @@ class CCodeBlock;
 // arguments in rcx, rdx, r8, r9; System V AMD64 (Linux) in rdi, rsi, rdx, rcx.
 namespace X64Abi
 {
-#if defined(_WIN32)
-static const asmjit::x86::Gp Arg0 = asmjit::x86::rcx;
-static const asmjit::x86::Gp Arg1 = asmjit::x86::rdx;
-static const asmjit::x86::Gp Arg2 = asmjit::x86::r8;
-static const asmjit::x86::Gp Arg3 = asmjit::x86::r9;
-#else
 static const asmjit::x86::Gp Arg0 = asmjit::x86::rdi;
 static const asmjit::x86::Gp Arg1 = asmjit::x86::rsi;
 static const asmjit::x86::Gp Arg2 = asmjit::x86::rdx;
 static const asmjit::x86::Gp Arg3 = asmjit::x86::rcx;
-#endif
 } // namespace X64Abi
 
 class CX64Ops :

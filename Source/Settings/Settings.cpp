@@ -4,13 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#if defined(_WIN32)
-#define EXPORT      extern "C" __declspec(dllexport)
-#define CALL        __cdecl
-#else
 #define EXPORT      extern "C" __attribute__((visibility("default")))
 #define CALL
-#endif
 
 CNotification g_NotifyLocal;
 CNotification * g_Notify = &g_NotifyLocal;

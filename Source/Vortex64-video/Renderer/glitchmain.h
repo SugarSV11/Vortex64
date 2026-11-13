@@ -7,9 +7,7 @@
 
 #pragma once
 
-#ifndef _WIN32
 //#define VPDEBUG
-#endif
 #ifdef VPDEBUG
 void dump_tex(int id);
 void dump_start();
@@ -20,16 +18,8 @@ extern int dumping;
 #include <Vortex64-video/trace.h>
 #include "types.h"
 
-#ifdef _WIN32
-#include <windows.h>
-typedef const char * (WINAPI * PFNWGLGETEXTENSIONSSTRINGARBPROC)(HDC hdc);
-#else
 #include <stdio.h>
-#endif
 
-#if defined(__ANDROID__) || defined(ANDROID)
-#include "OGLESwrappers.h"
-#else
 #include "opengl.h"
 
 extern "C" {
@@ -68,7 +58,6 @@ extern "C" {
 // symbols.  They must use the context-specific functions resolved by SDL.
 #define glActiveTextureARB pj64_glActiveTextureARB
 #define glMultiTexCoord2fARB pj64_glMultiTexCoord2fARB
-#endif
 
 #define zscale 1.0f
 
@@ -99,28 +88,6 @@ void updateCombinera(int i);
 void remove_tex(unsigned int idmin, unsigned int idmax);
 void add_tex(unsigned int id);
 
-#ifdef _WIN32
-extern PFNGLBLENDFUNCSEPARATEEXTPROC pj64_glBlendFuncSeparateEXT;
-extern PFNGLFOGCOORDFPROC pj64_glFogCoordfEXT;
-
-extern PFNGLCREATESHADEROBJECTARBPROC pj64_glCreateShaderObjectARB;
-extern PFNGLSHADERSOURCEARBPROC pj64_glShaderSourceARB;
-extern PFNGLCOMPILESHADERARBPROC pj64_glCompileShaderARB;
-extern PFNGLCREATEPROGRAMOBJECTARBPROC pj64_glCreateProgramObjectARB;
-extern PFNGLATTACHOBJECTARBPROC pj64_glAttachObjectARB;
-extern PFNGLLINKPROGRAMARBPROC pj64_glLinkProgramARB;
-extern PFNGLUSEPROGRAMOBJECTARBPROC pj64_glUseProgramObjectARB;
-extern PFNGLGETHANDLEARBPROC pj64_glGetHandleARB;
-extern PFNGLGETUNIFORMLOCATIONARBPROC pj64_glGetUniformLocationARB;
-extern PFNGLUNIFORM1IARBPROC pj64_glUniform1iARB;
-extern PFNGLUNIFORM4IARBPROC pj64_glUniform4iARB;
-extern PFNGLUNIFORM4FARBPROC pj64_glUniform4fARB;
-extern PFNGLUNIFORM1FARBPROC pj64_glUniform1fARB;
-extern PFNGLDELETEOBJECTARBPROC pj64_glDeleteObjectARB;
-extern PFNGLGETINFOLOGARBPROC pj64_glGetInfoLogARB;
-extern PFNGLGETOBJECTPARAMETERIVARBPROC pj64_glGetObjectParameterivARB;
-extern PFNGLSECONDARYCOLOR3FPROC pj64_glSecondaryColor3f;
-#endif
 void check_link(GLuint program);
 void vbo_enable();
 void vbo_disable();

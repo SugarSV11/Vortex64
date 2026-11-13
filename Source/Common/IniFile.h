@@ -1,8 +1,6 @@
 #pragma once
 
-#ifndef _WIN32
 #include <strings.h>
-#endif
 
 #include "CriticalSection.h"
 #include "File.h"

@@ -2518,7 +2518,6 @@ void CX64RecompilerOps::UnknownOpcode()
 
 void CX64RecompilerOps::EnterCodeBlock()
 {
-#if !defined(_WIN32)
     // System V AMD64: rbx, rbp and r12-r15 are callee-saved and are used by the
     // register cache, so preserve them for the C++ caller (6 pushes keep the
     // frame size below unchanged modulo 16).
@@ -2528,7 +2527,6 @@ void CX64RecompilerOps::EnterCodeBlock()
     m_Assembler.push(asmjit::x86::r13);
     m_Assembler.push(asmjit::x86::r14);
     m_Assembler.push(asmjit::x86::r15);
-#endif
     m_Assembler.sub(asmjit::x86::rsp, FunctionStackSize);
 }
 
@@ -3008,14 +3006,12 @@ void CX64RecompilerOps::ExitCodeBlock(void)
         m_Assembler.add(asmjit::x86::rsp, 32);
     }
     m_Assembler.add(asmjit::x86::rsp, FunctionStackSize);
-#if !defined(_WIN32)
     m_Assembler.pop(asmjit::x86::r15);
     m_Assembler.pop(asmjit::x86::r14);
     m_Assembler.pop(asmjit::x86::r13);
     m_Assembler.pop(asmjit::x86::r12);
     m_Assembler.pop(asmjit::x86::rbp);
     m_Assembler.pop(asmjit::x86::rbx);
-#endif
     m_Assembler.ret();
 }
 

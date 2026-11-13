@@ -2,13 +2,6 @@
 #include "Settings.h"
 #include "trace.h"
 #include <cstring>
-#ifdef _WIN32
-#include <Windows.h>
-#endif
-#ifdef ANDROID
-#include <Common/StdString.h>
-#include <vector>
-#endif
 
 struct ResolutionInfo
 {
@@ -41,9 +34,6 @@ private:
     bool m_default_res;
 };
 
-#ifdef ANDROID
-std::vector<ResolutionInfo> g_resolutions;
-#else
 static ResolutionInfo g_resolutions[] =
 {
     { "320x200", 320, 200, 0, false },
@@ -71,49 +61,11 @@ static ResolutionInfo g_resolutions[] =
     { "2048x1536", 2048, 1536, 0, false },
     { "2048x2048", 2048, 2048, 0, false },
 };
-#endif
 
-#ifdef ANDROID
-void UpdateScreenResolution(int ScreenWidth, int ScreenHeight)
-{
-    WriteTrace(TraceResolution, TraceError, "aspectmode: %d", g_settings->aspectmode());
-    g_resolutions.clear();
-    switch (g_settings->aspectmode())
-    {
-    case CSettings::Aspect_4x3:
-        g_resolutions.push_back(ResolutionInfo(stdstr_f("%dx%d", ScreenHeight * 4 / 3, ScreenHeight).c_str(), ScreenHeight * 4 / 3, ScreenHeight, 0, true));
-        g_resolutions.push_back(ResolutionInfo("960x720", 960, 720, 0, false));
-        g_resolutions.push_back(ResolutionInfo("800x600", 800, 600, 0, false));
-        g_resolutions.push_back(ResolutionInfo("640x480", 640, 480, 0, false));
-        g_resolutions.push_back(ResolutionInfo("480x360", 480, 360, 0, false));
-        g_resolutions.push_back(ResolutionInfo("320x240", 320, 240, 0, false));
-        break;
-    case CSettings::Aspect_16x9:
-        g_resolutions.push_back(ResolutionInfo(stdstr_f("%dx%d", ScreenHeight * 16 / 9, ScreenHeight).c_str(), ScreenHeight * 16 / 9, ScreenHeight, 0, true));
-        g_resolutions.push_back(ResolutionInfo("1280x720", 1280, 720, 0, false));
-        g_resolutions.push_back(ResolutionInfo("1067x600", 1067, 600, 0, false));
-        g_resolutions.push_back(ResolutionInfo("854x480", 854, 480, 0, false));
-        g_resolutions.push_back(ResolutionInfo("640x360", 640, 360, 0, false));
-        g_resolutions.push_back(ResolutionInfo("426x240", 426, 240, 0, false));
-        break;
-    case CSettings::Aspect_Original:
-        g_resolutions.push_back(ResolutionInfo("Original", ScreenWidth, ScreenHeight, 0, true));
-        break;
-    case CSettings::Aspect_Stretch:
-    default: //stretch
-        g_resolutions.push_back(ResolutionInfo(stdstr_f("%dx%d", ScreenWidth, ScreenHeight).c_str(), ScreenWidth, ScreenHeight, 0, true));
-        break;
-    }
-}
-#endif
 
 uint32_t GetScreenResolutionCount()
 {
-#ifdef ANDROID
-    return g_resolutions.size();
-#else
     return sizeof(g_resolutions) / sizeof(g_resolutions[0]);
-#endif
 }
 
 const char * GetScreenResolutionName(uint32_t index)
@@ -236,50 +188,6 @@ FullScreenResolutions::~FullScreenResolutions()
 
 void FullScreenResolutions::init()
 {
-#ifdef _WIN32
-    m_currentResolutions = -1;
-    DEVMODE enumMode, currentMode;
-    int iModeNum = 0;
-    memset(&enumMode, 0, sizeof(DEVMODE));
-
-    EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &currentMode);
-
-    ResolutionInfo prevInfo;
-    while (EnumDisplaySettings(nullptr, iModeNum++, &enumMode) != 0)
-    {
-        ResolutionInfo curInfo("", enumMode.dmPelsWidth, enumMode.dmPelsHeight, enumMode.dmDisplayFrequency);
-        if (enumMode.dmBitsPerPel == 32 && curInfo != prevInfo)
-        {
-            m_dwNumResolutions++;
-            prevInfo = curInfo;
-        }
-    }
-
-    m_aResolutions = new ResolutionInfo[m_dwNumResolutions];
-    m_aResolutionsStr = new char*[m_dwNumResolutions];
-    iModeNum = 0;
-    int current = 0;
-    char smode[256];
-    memset(&enumMode, 0, sizeof(DEVMODE));
-    prevInfo = ResolutionInfo();
-    while (EnumDisplaySettings(nullptr, iModeNum++, &enumMode) != 0)
-    {
-        ResolutionInfo curInfo(nullptr, enumMode.dmPelsWidth, enumMode.dmPelsHeight, enumMode.dmDisplayFrequency);
-        if (enumMode.dmBitsPerPel == 32 && curInfo != prevInfo)
-        {
-            if (enumMode.dmPelsHeight == currentMode.dmPelsHeight && enumMode.dmPelsWidth == currentMode.dmPelsWidth)
-            {
-                m_currentResolutions = current;
-            }
-            m_aResolutions[current] = curInfo;
-            sprintf(smode, curInfo.frequency() > 0 ? "%ix%i 32bpp %iHz" : "%ix%i 32bpp", curInfo.width(), curInfo.height(), curInfo.frequency());
-            m_aResolutionsStr[current] = new char[strlen(smode) + 1];
-            strcpy(m_aResolutionsStr[current], smode);
-            prevInfo = curInfo;
-            current++;
-        }
-    }
-#else
     // The full screen of the frontend is the window of the emulator made as large as the screen: there is no
     // display mode to choose, the game is drawn at the resolution of the screen (see ChangeSize in Main.cpp)
     m_currentResolutions = 0;
@@ -289,31 +197,11 @@ void FullScreenResolutions::init()
     static const char Native[] = "Native: the size of the screen";
     m_aResolutionsStr[0] = new char[sizeof(Native)];
     strcpy(m_aResolutionsStr[0], Native);
-#endif
 }
 
 bool FullScreenResolutions::changeDisplaySettings(uint32_t _resolution)
 {
-#ifdef _WIN32
-    uint32_t width, height, frequency;
-    getResolution(_resolution, &width, &height, &frequency);
-    ResolutionInfo info(nullptr, width, height, frequency);
-    DEVMODE enumMode;
-    int iModeNum = 0;
-    memset(&enumMode, 0, sizeof(DEVMODE));
-    while (EnumDisplaySettings(nullptr, iModeNum++, &enumMode) != 0)
-    {
-        ResolutionInfo curInfo(nullptr, enumMode.dmPelsWidth, enumMode.dmPelsHeight, enumMode.dmDisplayFrequency);
-        if (enumMode.dmBitsPerPel == 32 && curInfo == info) {
-            bool bRes = ChangeDisplaySettings(&enumMode, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL;
-            WriteTrace(TraceGlitch, TraceDebug, "width=%d, height=%d, freq=%d %s\r\n", enumMode.dmPelsWidth, enumMode.dmPelsHeight, enumMode.dmDisplayFrequency, bRes ? "Success" : "Failed");
-            return bRes;
-        }
-    }
     return false;
-#else // _WIN32
-    return false;
-#endif // _WIN32
 }
 
 FullScreenResolutions g_FullScreenResolutions;
@@ -342,7 +230,6 @@ int GetCurrentResIndex(void)
     return g_FullScreenResolutions.getCurrentResolutions();
 }
 
-#ifndef ANDROID
 const char ** getFullScreenResList(int32_t * Size)
 {
     WriteTrace(TraceGlitch, TraceDebug, "-");
@@ -355,4 +242,3 @@ uint32_t getFullScreenRes(uint32_t * width, uint32_t * height)
     g_FullScreenResolutions.getResolution(g_settings->FullScreenRes(), width, height);
     return g_settings->FullScreenRes();
 }
-#endif

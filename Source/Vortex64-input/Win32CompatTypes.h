@@ -9,10 +9,6 @@
 // declared; real Win32 headers are used unchanged on Windows.
 #pragma once
 
-#ifdef _WIN32
-#include <Windows.h>
-#include <guiddef.h>
-#else
 #include <cstdint>
 #include <cstring>
 
@@ -67,4 +63,3 @@ inline bool operator!=(const GUID & a, const GUID & b)
     return !(a == b);
 }
 
-#endif // _WIN32

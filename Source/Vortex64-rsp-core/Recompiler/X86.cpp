@@ -1302,11 +1302,7 @@ void MoveConstByteToN64Mem(uint8_t Const, int AddrReg)
     }
 
     PUTDST16(RecompPos, x86Command);
-#if defined(_M_IX86) && defined(_MSC_VER)
-    PUTDST32(RecompPos, RSPInfo.DMEM);
-#else
     g_Notify->BreakPoint(__FILE__, __LINE__);
-#endif
     PUTDST8(RecompPos, Const);
 }
 
@@ -1331,11 +1327,7 @@ void MoveConstHalfToN64Mem(uint16_t Const, int AddrReg)
     }
 
     PUTDST8(RecompPos, x86Command);
-#if defined(_M_IX86) && defined(_MSC_VER)
-    PUTDST32(RecompPos, RSPInfo.DMEM);
-#else
     g_Notify->BreakPoint(__FILE__, __LINE__);
-#endif
     PUTDST16(RecompPos, Const);
 }
 
@@ -1376,11 +1368,7 @@ void MoveConstToN64Mem(uint32_t Const, int AddrReg)
     }
 
     PUTDST16(RecompPos, x86Command);
-#if defined(_M_IX86) && defined(_MSC_VER)
-    PUTDST32(RecompPos, RSPInfo.DMEM);
-#else
     g_Notify->BreakPoint(__FILE__, __LINE__);
-#endif
     PUTDST32(RecompPos, Const);
 }
 

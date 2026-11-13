@@ -74,24 +74,10 @@ class CControl_Plugin;
 class CN64System;
 class CPlugins;
 
-#if defined(_WIN32)
-#include <objbase.h>
-#else
 #define __interface struct
-#endif
 
 __interface RenderWindow
 {
-#ifdef _WIN32
-    virtual bool ResetPluginsInUiThread(CPlugins * plugins, CN64System * System) = 0;
-    virtual void * GetWindowHandle(void) const = 0;
-    virtual void * GetStatusBar(void) const = 0;
-    virtual void * GetModuleInstance(void) const = 0;
-#elif defined(ANDROID)
-    virtual void GfxThreadInit() = 0;
-    virtual void GfxThreadDone() = 0;
-    virtual void SwapWindow() = 0;
-#else
     // Desktop Linux: lets a frontend (Vortex64-gui) hand the video plugin
     // a real native window to render into (see GFXPlugin.cpp's Info.hWnd),
     // so gfxSstWinOpen() (Vortex64-video/Renderer/OGLglitchmain.cpp) can
@@ -100,7 +86,6 @@ __interface RenderWindow
     // just returns nullptr here, which keeps that plugin's existing
     // standalone-SDL2-window behavior unchanged.
     virtual void * GetWindowHandle(void) const = 0;
-#endif
 };
 
 class CPlugins

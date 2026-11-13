@@ -57,11 +57,9 @@ extern int exception;
 
 int InitGfx();
 void ReleaseGfx();
-#ifndef _WIN32
 void CloseConfig();
 void RequestConfigReinit();
 void ConfigReinitIfRequested();
-#endif
 
 // The highest 8 bits are the segment # (1-16), and the lower 24 bits are the offset to
 // add to it.

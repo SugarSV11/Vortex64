@@ -1,13 +1,9 @@
 #include "DynamicLibrary.h"
 #include "StdString.h"
-#ifdef _WIN32
-#include <windows.h>
-#else
 #include <dlfcn.h>
 #include <link.h>
 #include <errno.h>
 #include <unistd.h>
-#endif
 
 DynLibHandle DynamicLibraryOpen(const char * pccLibraryPath, bool ShowErrors)
 {
@@ -15,13 +11,7 @@ DynLibHandle DynamicLibraryOpen(const char * pccLibraryPath, bool ShowErrors)
     {
         return nullptr;
     }
-#ifdef _WIN32
-    UINT LastErrorMode = SetErrorMode(ShowErrors ? 0 : SEM_FAILCRITICALERRORS);
-    DynLibHandle Lib = (DynLibHandle)LoadLibrary(stdstr(pccLibraryPath).ToUTF16().c_str());
-    SetErrorMode(LastErrorMode);
-#else
     DynLibHandle Lib = (DynLibHandle)dlopen(pccLibraryPath, RTLD_NOW);
-#endif
     return Lib;
 }
 
@@ -29,11 +19,7 @@ void DynamicLibraryClose(DynLibHandle Lib)
 {
     if (Lib != nullptr)
     {
-#ifdef _WIN32
-        FreeLibrary((HMODULE)Lib);
-#else
         dlclose(Lib);
-#endif
     }
 }
 
@@ -44,9 +30,6 @@ void * DynamicLibraryGetProc(DynLibHandle Lib, const char * ProcedureName)
         return nullptr;
     }
 
-#ifdef _WIN32
-    return GetProcAddress((HMODULE)Lib, ProcedureName);
-#else
     // GetProcAddress only looks at the module itself, dlsym also finds symbols
     // exported by the libraries it depends on. A plugin helper module linked against
     // a real plugin (e.g. the Qt configuration module) must not answer for that
@@ -62,5 +45,4 @@ void * DynamicLibraryGetProc(DynLibHandle Lib, const char * ProcedureName)
         }
     }
     return Symbol;
-#endif
 }

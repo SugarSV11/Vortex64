@@ -7,12 +7,8 @@
 
 #include <Vortex64-video/Renderer/Renderer.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#else // _WIN32
 #include <string.h>
 #include <stdlib.h>
-#endif // _WIN32
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

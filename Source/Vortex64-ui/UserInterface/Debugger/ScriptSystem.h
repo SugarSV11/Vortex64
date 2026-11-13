@@ -3,19 +3,11 @@
 #include <windows.h>
 
 #include "ScriptTypes.h"
-#ifdef _WIN32
-#include "debugger.h"
-#endif
 
 #pragma once
 
-#ifdef _WIN32
-#define SCRIPTSYS_SCRIPTS_DIR "Scripts\\"
-#define SCRIPTSYS_MODULES_DIR "Scripts\\modules\\"
-#else
 #define SCRIPTSYS_SCRIPTS_DIR "Scripts/"
 #define SCRIPTSYS_MODULES_DIR "Scripts/modules/"
-#endif
 
 class CScriptSystem
 {

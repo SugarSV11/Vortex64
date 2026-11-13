@@ -80,12 +80,8 @@ void RegisterUISettings(void)
 
 float DPIScale(void)
 {
-#ifdef _WIN32
-    return CClientDC(0).GetDeviceCaps(LOGPIXELSX) / 96.0f;
-#else
     // Linux: the Qt frontend scales through Qt's own high-DPI support.
     return 1.0f;
-#endif
 }
 
 void UISettingsSaveBool(UISettingID Type, bool Value)

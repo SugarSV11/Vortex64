@@ -6,7 +6,3 @@
 // GNU/GPLv2 licensed: https://gnu.org/licenses/gpl-2.0.html
 #pragma once
 
-#ifdef _WIN32
-void ConfigInit(void * hinst);
-void ConfigCleanup(void);
-#endif

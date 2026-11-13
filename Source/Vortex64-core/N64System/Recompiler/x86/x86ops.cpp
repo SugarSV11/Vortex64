@@ -122,20 +122,12 @@ void CX86Ops::CallFunc(uint32_t FunctPtr, const char * FunctName)
     call((uint64_t)FunctPtr);
 }
 
-#ifdef _MSC_VER
-void CX86Ops::CallThis(uint32_t ThisPtr, uint32_t FunctPtr, const char * FunctName, uint32_t /*StackSize*/)
-{
-    mov(asmjit::x86::ecx, ThisPtr);
-    CallFunc(FunctPtr, FunctName);
-}
-#else
 void CX86Ops::CallThis(uint32_t ThisPtr, uint32_t FunctPtr, const char * FunctName, uint32_t StackSize)
 {
     push(ThisPtr);
     CallFunc(FunctPtr, FunctName);
     AddConstToX86Reg(asmjit::x86::esp, StackSize);
 }
-#endif
 
 void CX86Ops::CompConstByteToVariable(void * Variable, const char * VariableName, uint8_t Const)
 {

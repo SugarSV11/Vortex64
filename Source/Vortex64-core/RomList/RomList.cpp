@@ -381,13 +381,8 @@ bool CRomList::LoadDataFromRomFile(const char * FileName, uint8_t * Data, int32_
         char zname[132];
         unzFile file;
         zlib_filefunc64_def ffunc;
-#ifdef _WIN32
-        fill_win32_filefunc64W(&ffunc);
-        file = unzOpen2_64(stdstr(FileName).ToUTF16().c_str(), &ffunc);
-#else
         fill_fopen64_filefunc(&ffunc);
         file = unzOpen2_64(FileName, &ffunc);
-#endif
         if (file == nullptr)
         {
             return false;

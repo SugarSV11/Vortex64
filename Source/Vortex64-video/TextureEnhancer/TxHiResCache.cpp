@@ -6,9 +6,6 @@
 // Copyright(C) 2003 Rice1964
 // GNU/GPLv2 licensed: https://gnu.org/licenses/gpl-2.0.html
 
-#ifdef _WIN32
-#pragma warning(disable: 4786)
-#endif
 
 // Dump processed high resolution textures to disk
 // (0:disable, 1:enable)
@@ -47,9 +44,6 @@
 #include <Common/path.h>
 #include <Common/StdString.h>
 #include <Vortex64-video/Renderer/types.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 
 TxHiResCache::~TxHiResCache()
 {
@@ -211,12 +205,6 @@ bool TxHiResCache::loadHiResTextures(const char * dir_path, bool replace)
             // Case sensitivity fiasco!
             // Files must use _a, _rgb, _all, _allciByRGBA, _ciByRGBA, _ci
             // and file extensions must be in lower case letters!
-#ifdef _WIN32
-            {
-                unsigned int i;
-                for (i = 0; i < strlen(fname); i++) fname[i] = (char)tolower(fname[i]);
-            }
-#endif
             ident.assign(fname);
 
             // Read in Rice's file naming convention
@@ -226,12 +214,6 @@ bool TxHiResCache::loadHiResTextures(const char * dir_path, bool replace)
             // Case sensitivity fiasco!
             // Files must use _a, _rgb, _all, _allciByRGBA, _ciByRGBA, _ci
             // and file extensions must be in lower case letters!
-#ifdef _WIN32
-            {
-                unsigned int i;
-                for (i = 0; i < strlen(fname); i++) fname[i] = (char)tolower(fname[i]);
-            }
-#endif
             pfname = fname + strlen(fname) - 4;
             if (!(pfname == strstr(fname, ".png") ||
                 pfname == strstr(fname, ".bmp") ||
@@ -436,17 +418,10 @@ bool TxHiResCache::loadHiResTextures(const char * dir_path, bool replace)
                 // _ciByRGBA.png, _ciByRGBA.dds, _ci.bmp
                 if (pfname == strstr(fname, "_all.png") ||
                     pfname == strstr(fname, "_all.dds") ||
-#ifdef _WIN32
-                    pfname == strstr(fname, "_allcibyrgba.png") ||
-                    pfname == strstr(fname, "_allcibyrgba.dds") ||
-                    pfname == strstr(fname, "_cibyrgba.png") ||
-                    pfname == strstr(fname, "_cibyrgba.dds") ||
-#else
                     pfname == strstr(fname, "_allciByRGBA.png") ||
                     pfname == strstr(fname, "_allciByRGBA.dds") ||
                     pfname == strstr(fname, "_ciByRGBA.png") ||
                     pfname == strstr(fname, "_ciByRGBA.dds") ||
-#endif
                     pfname == strstr(fname, "_ci.bmp")) {
                     CPath TargetFile(dir_path, fname);
                     if ((fp = fopen(TargetFile, "rb")) != nullptr) {

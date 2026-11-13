@@ -83,11 +83,7 @@ bool CControl_Plugin::Initiate(CN64System * System, RenderWindow * Window)
         {
             return false;
         }
-#ifdef _WIN32
-        InitiateControllers_1_0(Window->GetWindowHandle(), m_PluginControllers);
-#else
         InitiateControllers_1_0(nullptr, m_PluginControllers);
-#endif
         m_Initialized = true;
     }
     else if (m_PluginInfo.Version >= 0x0101)
@@ -95,13 +91,8 @@ bool CControl_Plugin::Initiate(CN64System * System, RenderWindow * Window)
         CONTROL_INFO ControlInfo;
         ControlInfo.Controls = m_PluginControllers;
         ControlInfo.HEADER = (System == nullptr ? Buffer : g_Rom->GetRomAddress());
-#ifdef _WIN32
-        ControlInfo.hinst = Window ? Window->GetModuleInstance() : nullptr;
-        ControlInfo.hWnd = Window ? Window->GetWindowHandle() : nullptr;
-#else
         ControlInfo.hinst = nullptr;
         ControlInfo.hWnd = nullptr;
-#endif
         ControlInfo.Reserved = true;
 
         if (m_PluginInfo.Version == 0x0101)

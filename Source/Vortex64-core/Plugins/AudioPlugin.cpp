@@ -1,8 +1,6 @@
 #include "stdafx.h"
 
-#ifndef _WIN32
 #include <Common/Util.h>
-#endif
 #include <Vortex64-core/N64System/Mips/MemoryVirtualMem.h>
 #include <Vortex64-core/N64System/Mips/Register.h>
 #include <Vortex64-core/N64System/N64Disk.h>
@@ -11,22 +9,14 @@
 #include <Vortex64-core/N64System/SystemGlobals.h>
 #include <Vortex64-core/Plugins/AudioPlugin.h>
 #include <Vortex64-plugin-spec/Audio.h>
-#ifdef _WIN32
-#include <Windows.h>
-#else
 #include <pthread.h>
-#endif
 
 CAudioPlugin::CAudioPlugin() :
     AiLenChanged(nullptr),
     AiReadLength(nullptr),
     ProcessAList(nullptr),
-#ifdef _WIN32
-    m_hAudioThread(nullptr),
-#else
     m_AudioThread(nullptr),
     m_StopAudioThread(false),
-#endif
     AiUpdate(nullptr),
     AiDacrateChanged(nullptr)
 {
@@ -34,14 +24,11 @@ CAudioPlugin::CAudioPlugin() :
 
 CAudioPlugin::~CAudioPlugin()
 {
-#ifndef _WIN32
     StopAudioThread();
-#endif
     Close(nullptr);
     UnloadPlugin();
 }
 
-#ifndef _WIN32
 // Linux: the audio thread is a CThread that is asked to stop and joined
 // (upstream Windows terminates it with TerminateThread)
 void CAudioPlugin::StopAudioThread(void)
@@ -61,7 +48,6 @@ void CAudioPlugin::Close(RenderWindow * Render)
     StopAudioThread();
     CPlugin::Close(Render);
 }
-#endif
 
 bool CAudioPlugin::LoadFunctions(void)
 {
@@ -116,9 +102,7 @@ bool CAudioPlugin::LoadFunctions(void)
 
 bool CAudioPlugin::Initiate(CN64System * System, RenderWindow * Window)
 {
-#ifndef _WIN32
     StopAudioThread();
-#endif
 
     // Get function from DLL
     int32_t(CALL * InitiateAudio)(AUDIO_INFO Audio_Info);
@@ -130,13 +114,8 @@ bool CAudioPlugin::Initiate(CN64System * System, RenderWindow * Window)
 
     AUDIO_INFO Info = {0};
 
-#ifdef _WIN32
-    Info.hWnd = Window ? Window->GetWindowHandle() : nullptr;
-    Info.hinst = Window ? Window->GetModuleInstance() : nullptr;
-#else
     Info.hWnd = nullptr;
     Info.hinst = nullptr;
-#endif
     Info.Reserved = true;
     Info.CheckInterrupts = DummyCheckInterrupts;
 
@@ -186,15 +165,6 @@ bool CAudioPlugin::Initiate(CN64System * System, RenderWindow * Window)
     {
         if (AiUpdate)
         {
-#ifdef _WIN32
-            if (m_hAudioThread)
-            {
-                WriteTrace(TraceAudioPlugin, TraceDebug, "Terminate Audio Thread");
-                TerminateThread(m_hAudioThread, 0);
-            }
-            DWORD ThreadID;
-            m_hAudioThread = CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)AudioThread, (LPVOID)this, 0, &ThreadID);
-#else
             m_StopAudioThread = false;
             m_AudioThread = new CThread((CThread::CTHREAD_START_ROUTINE)AudioThread);
             if (!m_AudioThread->Start(this))
@@ -202,7 +172,6 @@ bool CAudioPlugin::Initiate(CN64System * System, RenderWindow * Window)
                 delete m_AudioThread;
                 m_AudioThread = nullptr;
             }
-#endif
         }
 
         if (System->m_Reg.AI_DACRATE_REG != 0)
@@ -215,16 +184,7 @@ bool CAudioPlugin::Initiate(CN64System * System, RenderWindow * Window)
 
 void CAudioPlugin::UnloadPluginDetails(void)
 {
-#ifdef _WIN32
-    if (m_hAudioThread)
-    {
-        WriteTrace(TraceAudioPlugin, TraceDebug, "Terminate audio thread");
-        TerminateThread(m_hAudioThread, 0);
-        m_hAudioThread = nullptr;
-    }
-#else
     StopAudioThread();
-#endif
     AiDacrateChanged = nullptr;
     AiLenChanged = nullptr;
     AiReadLength = nullptr;
@@ -245,20 +205,6 @@ void CAudioPlugin::DacrateChanged(SYSTEM_TYPE Type)
     AiDacrateChanged(Type);
 }
 
-#ifdef _WIN32
-void CAudioPlugin::AudioThread(CAudioPlugin * _this)
-{
-    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
-    if (g_Settings->LoadBool(Setting_CN64TimeCritical))
-    {
-        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
-    }
-    for (;;)
-    {
-        _this->AiUpdate(true);
-    }
-}
-#else
 void * CAudioPlugin::AudioThread(void * param)
 {
     CAudioPlugin * _this = (CAudioPlugin *)param;
@@ -278,4 +224,3 @@ void * CAudioPlugin::AudioThread(void * param)
     }
     return nullptr;
 }
-#endif

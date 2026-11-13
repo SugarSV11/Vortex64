@@ -7,9 +7,7 @@
 #include "ScriptSystem.h"
 #include "ScriptTypes.h"
 #include <sstream>
-#ifndef _WIN32
 #include <filesystem>
-#endif
 #include <sys/stat.h>
 
 CScriptSystem::CScriptSystem(CDebuggerUI * debugger) :
@@ -139,21 +137,6 @@ stdstr CScriptSystem::ModulesDirPath()
 
 void CScriptSystem::InitDirectories()
 {
-#ifdef _WIN32
-    m_InstallDirFullPath = (std::string)CPath(CPath::MODULE_DIRECTORY);
-    m_ScriptsDirFullPath = m_InstallDirFullPath + SCRIPTSYS_SCRIPTS_DIR;
-    m_ModulesDirFullPath = m_InstallDirFullPath + SCRIPTSYS_MODULES_DIR;
-
-    if (!PathFileExistsA(m_ScriptsDirFullPath.c_str()))
-    {
-        CreateDirectoryA(m_ScriptsDirFullPath.c_str(), nullptr);
-    }
-
-    if (!PathFileExistsA(m_ModulesDirFullPath.c_str()))
-    {
-        CreateDirectoryA(m_ModulesDirFullPath.c_str(), nullptr);
-    }
-#else
     // The install directory is usually read-only: the scripts (and their modules) are user
     // data in $XDG_DATA_HOME/vortex64/Scripts, where the scripts shipped in the install
     // directory are copied once (not over a script the user has edited)
@@ -174,7 +157,6 @@ void CScriptSystem::InitDirectories()
             std::filesystem::copy_file(it->path(), dest, copyEc);
         }
     }
-#endif
 }
 
 void CScriptSystem::StartScript(const char * name, const char * path)

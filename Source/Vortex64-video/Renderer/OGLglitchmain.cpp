@@ -12,15 +12,11 @@ static unsigned g_present_context_generation = 0; // counts the contexts made (t
 
 #define SAVE_CBUFFER
 
-#ifdef _WIN32
-#include <windows.h>
-#else
 #include <SDL2/SDL.h>
 #include <cxxabi.h>
 #include <stdint.h>
 #include <stdarg.h>
 #include <string.h>
-#endif // _WIN32
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
@@ -38,7 +34,6 @@ used only in g_Notify->DisplayError when OpenGL extension loading fails on WGL
 
 #include <Settings/Settings.h>
 
-#ifndef _WIN32
 SDL_Window *g_sdl_window = nullptr;
 SDL_GLContext g_sdl_context = nullptr;
 static bool g_sdl_window_is_foreign = false;
@@ -47,19 +42,11 @@ static void *PJ64_GetGLProcAddress(const char *name)
 {
     return SDL_GL_GetProcAddress(name);
 }
-#else
-static void *PJ64_GetGLProcAddress(const char *name)
-{
-    return (void *)wglGetProcAddress(name);
-}
-#endif
 
 int screen_width, screen_height;
-#ifndef _WIN32
 // the texture of the scaled picture belongs to the OpenGL context: a new context (the renderer is opened again) has none
 static GLuint present_texture = 0;
 static int texture_w = 0, texture_h = 0;
-#endif
 
 static inline void opt_glCopyTexImage2D(GLenum target,
     GLint level,
@@ -136,14 +123,6 @@ void APIENTRY dummy_glBlendFuncSeparate(GLenum, GLenum, GLenum, GLenum)
     g_Notify->DisplayError("glBlendFuncSeparate");
 }
 
-#ifdef _WIN32
-PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB;
-const char * APIENTRY dummy_wglGetExtensionsString(HDC)
-{
-    g_Notify->DisplayError("wglGetExtensionsString");
-    return nullptr;
-}
-#endif // _WIN32
 
 PFNGLBINDFRAMEBUFFEREXTPROC pj64_glBindFramebufferEXT;
 PFNGLFRAMEBUFFERTEXTURE2DEXTPROC pj64_glFramebufferTexture2DEXT;
@@ -326,11 +305,6 @@ int save_w, save_h;
 int lfb_color_fmt;
 float invtex[2];
 
-#ifdef _WIN32
-static HDC hDC = nullptr;
-static HGLRC hGLRC = nullptr;
-static HWND hToolBar = nullptr;
-#endif // _WIN32
 
 static int savedWidtho, savedHeighto;
 static int savedWidth, savedHeight;
@@ -439,37 +413,6 @@ int isExtensionSupported(const char *extension)
     return 0;
 }
 
-#ifdef _WIN32
-int isWglExtensionSupported(const char *extension)
-{
-    const GLubyte *extensions = nullptr;
-    const GLubyte *start;
-    GLubyte *where, *terminator;
-
-    where = (GLubyte *)strchr(extension, ' ');
-    if (where || *extension == '\0')
-        return 0;
-
-    extensions = (GLubyte*)wglGetExtensionsStringARB(wglGetCurrentDC());
-
-    start = extensions;
-    for (;;)
-    {
-        where = (GLubyte *)strstr((const char *)start, extension);
-        if (!where)
-            break;
-
-        terminator = where + strlen(extension);
-        if (where == start || *(where - 1) == ' ')
-            if (*terminator == ' ' || *terminator == '\0')
-                return 1;
-
-        start = terminator;
-    }
-
-    return 0;
-}
-#endif // _WIN32
 
 #define GrPixelFormat_t int
 
@@ -485,20 +428,6 @@ bool gfxSstWinOpen(gfxColorFormat_t color_format, gfxOriginLocation_t origin_loc
     color_texture = free_texture++;
     depth_texture = free_texture++;
 
-#ifdef _WIN32
-    PIXELFORMATDESCRIPTOR pfd;
-    memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
-    pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-    pfd.nVersion = 1;
-    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_GENERIC_ACCELERATED | PFD_DOUBLEBUFFER;
-    pfd.iPixelType = PFD_TYPE_RGBA;
-    pfd.iLayerType = PFD_MAIN_PLANE;
-    pfd.cColorBits = 32;
-    pfd.cDepthBits = 24;
-    pfd.cAuxBuffers = 1;
-
-    int pfm;
-#else
     /*
      * Native Linux OpenGL backend using SDL2.
      */
@@ -642,7 +571,6 @@ bool gfxSstWinOpen(gfxColorFormat_t color_format, gfxOriginLocation_t origin_loc
            glGetString(GL_RENDERER));
     printf("[Project64 Video] GL_VERSION: %s\n",
            glGetString(GL_VERSION));
-#endif // _WIN32
 
     WriteTrace(TraceGlitch, TraceDebug, "color_format: %d, origin_location: %d, nColBuffers: %d, nAuxBuffers: %d", color_format, origin_location, nColBuffers, nAuxBuffers);
 
@@ -653,7 +581,6 @@ bool gfxSstWinOpen(gfxColorFormat_t color_format, gfxOriginLocation_t origin_loc
     screen_width = g_width;
     screen_height = g_height;
 
-#ifndef _WIN32
     // "Autodetect VRAM size" off: the size of the settings (as upstream); on (0): the default of the texture memory
     if (g_settings->wrpVRAM() != 0)
     {
@@ -663,56 +590,6 @@ bool gfxSstWinOpen(gfxColorFormat_t color_format, gfxOriginLocation_t origin_loc
             TMU_SIZE = (int)Tmu;
         }
     }
-#endif
-#ifdef _WIN32
-    TMU_SIZE = ((g_settings->wrpVRAM() * 1024 * 1024) - g_width * g_height * 4 * 3) / 2;
-
-    // Save screen resolution for hwfbe (hardware framebuffer emulation?), after resolution enumeration
-    if ((HWND)gfx.hWnd != nullptr)
-    {
-        hDC = GetDC((HWND)gfx.hWnd);
-    }
-    if (hDC == nullptr)
-    {
-        WriteTrace(TraceGlitch, TraceWarning, "GetDC on main window failed");
-        return false;
-    }
-
-    if ((pfm = ChoosePixelFormat(hDC, &pfd)) == 0) {
-        //printf("Disabling auxiliary buffers\n");
-        pfd.cAuxBuffers = 0;
-        pfm = ChoosePixelFormat(hDC, &pfd);
-    }
-    if (pfm == 0)
-    {
-        WriteTrace(TraceGlitch, TraceWarning, "ChoosePixelFormat failed");
-        return false;
-    }
-    if (SetPixelFormat(hDC, pfm, &pfd) == 0)
-    {
-        WriteTrace(TraceGlitch, TraceWarning, "SetPixelFormat failed");
-        return false;
-    }
-
-    if ((hGLRC = wglCreateContext(hDC)) == 0)
-    {
-        WriteTrace(TraceGlitch, TraceWarning, "wglCreateContext failed!");
-        gfxSstWinClose();
-        return false;
-    }
-
-    HGLRC CurrenthGLRC = wglGetCurrentContext();
-
-    if (CurrenthGLRC == nullptr || CurrenthGLRC == hGLRC)
-    {
-        if (!wglMakeCurrent(hDC, hGLRC))
-        {
-            WriteTrace(TraceGlitch, TraceWarning, "wglMakeCurrent failed!");
-            gfxSstWinClose();
-            return false;
-        }
-    }
-#endif // _WIN32
     lfb_color_fmt = color_format;
     if (origin_location != GFX_ORIGIN_UPPER_LEFT) WriteTrace(TraceGlitch, TraceWarning, "Origin must be in upper left corner");
     if (nColBuffers != 2) WriteTrace(TraceGlitch, TraceWarning, "Number of color buffer is not 2");
@@ -805,15 +682,6 @@ bool gfxSstWinOpen(gfxColorFormat_t color_format, gfxOriginLocation_t origin_loc
         pj64_glFogCoordfEXT =
             (PFNGLFOGCOORDFPROC)dummy_glFogCoordf;
 
-#ifdef _WIN32
-    wglGetExtensionsStringARB =
-        (PFNWGLGETEXTENSIONSSTRINGARBPROC)
-        wglGetProcAddress("wglGetExtensionsStringARB");
-
-    if (wglGetExtensionsStringARB == nullptr)
-        wglGetExtensionsStringARB =
-            (PFNWGLGETEXTENSIONSSTRINGARBPROC)dummy_wglGetExtensionsString;
-#endif
 
     // ========================================================
     // Framebuffer objects
@@ -970,16 +838,10 @@ bool gfxSstWinOpen(gfxColorFormat_t color_format, gfxOriginLocation_t origin_loc
     if (pj64_glCompressedTexImage2DARB == nullptr)
         pj64_glCompressedTexImage2DARB = (PFNGLCOMPRESSEDTEXIMAGE2DPROC)dummy_glCompressedTexImage2D;
 
-#ifndef ANDROID
     glViewport(0, g_viewport_offset, g_width, g_height);
     viewport_width = g_width;
     viewport_height = g_height;
     nvidia_viewport_hack = 1;
-#else
-    glViewport(0, g_viewport_offset, width, height);
-    viewport_width = width;
-    viewport_height = height;
-#endif // _WIN32
 
     //   void do_benchmarks();
     //   do_benchmarks();
@@ -1054,9 +916,7 @@ bool gfxSstWinClose()
 {
     WriteTrace(TraceGlitch, TraceDebug, "-");
     int i;
-#ifndef WIN32
     int clear_texbuff = use_fbo;
-#endif
 
     for (i = 0; i < 2; i++) {
         tmu_usage[i].min = 0x0FFFFFFFul;
@@ -1065,19 +925,16 @@ bool gfxSstWinClose()
     }
 
     free_combiners();
-#ifndef WIN32
     try // I don't know why, but OpenGL can be killed before this function call when emulator is closed (Gonetz).
         // Comment by Ziggy: I found the problem: it is a function pointer, when the extension isn't supported, it is then zero, so just need to check the pointer prior to do the call.
     {
         if (use_fbo && pj64_glBindFramebufferEXT)
             pj64_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
     }
-#ifndef _WIN32
     catch (const abi::__forced_unwind &)
     {
         throw;
     }
-#endif
     catch (...)
     {
         clear_texbuff = 0;
@@ -1092,31 +949,17 @@ bool gfxSstWinClose()
             pj64_glDeleteRenderbuffersEXT(1, &(fbs[i].zbid));
         }
 }
-#endif
     nb_fb = 0;
 
     free_textures();
-#ifndef WIN32
     // (Comment by Ziggy) For some reasons, Project64 doesn't like remove_tex on exit
     remove_tex(0, 0xfffffff);
-#endif
 
-#ifdef _WIN32
-    if (hGLRC)
-    {
-        wglMakeCurrent(hDC, nullptr);
-        wglDeleteContext(hGLRC);
-        hGLRC = nullptr;
-    }
-    ExitFullScreen();
-#else
     if (g_sdl_context != nullptr)
     {
         SDL_GL_DeleteContext(g_sdl_context);
-#ifndef _WIN32
         present_texture = 0; // (it went with the context)
         texture_w = texture_h = 0;
-#endif
         g_sdl_context = nullptr;
     }
     if (g_sdl_window != nullptr)
@@ -1126,7 +969,6 @@ bool gfxSstWinClose()
     }
     g_sdl_window_is_foreign = false;
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
-#endif
     return true;
 }
 
@@ -1558,10 +1400,6 @@ void updateTexture()
 
 void gfxRenderBuffer(gfxBuffer_t buffer)
 {
-#ifdef _WIN32
-    static HANDLE region = nullptr;
-    //int realWidth = pBufferWidth, realHeight = pBufferHeight;
-#endif // _WIN32
     WriteTrace(TraceGlitch, TraceDebug, "buffer: %d", buffer);
     //printf("gfxRenderBuffer(%d)\n", buffer);
 
@@ -1734,7 +1572,6 @@ void gfxBufferClear(gfxColor_t color, gfxAlpha_t alpha, uint32_t depth)
     grDisplayGLError("gfxBufferClear");
 }
 
-#ifndef _WIN32
 bool PJ64_GLXDrawableSize(int & width, int & height); // GLXDrawable.cpp
 extern volatile int g_auto_request_w, g_auto_request_h; // Main.cpp
 
@@ -1832,7 +1669,6 @@ static void PJ64_PresentScaled(int dw, int dh)
     glPopAttrib();
     pj64_glUseProgramObjectARB((GLhandleARB)program);
 }
-#endif // _WIN32
 
 // The synchronization of the presentation with the monitor (Vortex64-plugin-spec/PresentControl.h): the frontend sends the mode (Auto,
 // On, Off), the refresh rate of the monitor and the frame rate of the game; the swap interval of the context follows. Without a frontend
@@ -1846,7 +1682,6 @@ static bool PresentTrace()
     return On;
 }
 
-#ifndef _WIN32
 static void ApplySwapInterval(bool LegacyOn)
 {
     static unsigned context = ~0u;
@@ -1898,7 +1733,6 @@ static void ApplySwapInterval(bool LegacyOn)
         fprintf(stderr, "[present] Glide64: swap interval wanted %d, applied %d (%s)%s\n", wanted, applied, plan.Reason, got != wanted ? " - the driver refused the wanted one" : "");
     }
 }
-#endif
 
 void gfxBufferSwap(uint32_t swap_interval)
 {
@@ -1910,9 +1744,6 @@ void gfxBufferSwap(uint32_t swap_interval)
         return;
     }
 
-#ifdef _WIN32
-    SwapBuffers(wglGetCurrentDC());
-#else // _WIN32
     // This was a no-op on desktop Linux: the double-buffered GL context
     // (SDL_GL_DOUBLEBUFFER, set in gfxSstWinOpen()) was never actually
     // presented, so every frame stayed in the back buffer forever and the
@@ -1969,7 +1800,6 @@ void gfxBufferSwap(uint32_t swap_interval)
         {
         }
     }
-#endif // _WIN32
     for (i = 0; i < nb_fb; i++)
         fbs[i].buff_clear = 1;
 
@@ -2248,18 +2078,6 @@ bool gfxLfbWriteRegion(gfxBuffer_t dst_buffer, uint32_t dst_x, uint32_t dst_y, g
 }
 
 // Wrapper-specific Glide extensions
-#ifdef _WIN32
-static void CorrectGamma(LPVOID apGammaRamp)
-{
-    HDC hdc = GetDC(nullptr);
-    if (hdc != nullptr)
-    {
-		if (to_fullscreen)
-			SetDeviceGammaRamp(hdc, apGammaRamp);
-        ReleaseDC(nullptr, hdc);
-    }
-}
-#else
 static void CorrectGamma(const uint16_t aGammaRamp[3][256])
 {
     int res;
@@ -2269,7 +2087,6 @@ static void CorrectGamma(const uint16_t aGammaRamp[3][256])
     fputs("Error: Replacement for SDL_SetGammaRamp unimplemented.\n", stderr);
     WriteTrace(TraceGlitch, TraceDebug, "SDL_SetGammaRamp returned %d\r\n", res);
 }
-#endif
 
 void gfxLoadGammaTable(uint32_t /*nentries*/, uint32_t *red, uint32_t *green, uint32_t *blue)
 {
@@ -2288,18 +2105,9 @@ void gfxGetGammaTableExt(uint32_t /*nentries*/, uint32_t *red, uint32_t *green, 
 {
     WriteTrace(TraceGlitch, TraceDebug, "-");
     uint16_t aGammaRamp[3][256];
-#ifdef _WIN32
-    HDC hdc = GetDC(nullptr);
-    if (hdc == nullptr)
-        return;
-    if (GetDeviceGammaRamp(hdc, aGammaRamp) == TRUE)
-    {
-        ReleaseDC(nullptr, hdc);
-#else
     fputs("Error:  Replacement for SDL_GetGammaRamp unimplemented.\n", stderr);
     // if (SDL_GetGammaRamp(aGammaRamp[0], aGammaRamp[1], aGammaRamp[2]) != -1)
     {
-#endif
         for (int i = 0; i < 256; i++)
         {
             red[i] = aGammaRamp[0][i] >> 8;
@@ -2368,11 +2176,7 @@ int grDisplayGLError(const char* message)
         return (failure);
 #endif
 
-#ifdef _WIN32
-    MessageBoxA(nullptr, message, GL_errors[error_index], MB_ICONERROR);
-#else
     fprintf(stderr, "%s\n%s\n\n", GL_errors[error_index], message);
-#endif
     return (failure);
 }
 #endif

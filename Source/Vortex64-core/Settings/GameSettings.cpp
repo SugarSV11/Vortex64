@@ -39,11 +39,7 @@ void RefreshGameSettings(void)
     g_GameSettings.fixedAudio = g_Settings->LoadBool(Game_FixedAudio);
     g_GameSettings.fullSpeed = g_Settings->LoadBool(Game_FullSpeed);
     g_GameSettings.core32Bit = g_Settings->LoadBool(Game_32Bit);
-#ifdef ANDROID
-    g_GameSettings.fastSP = false;
-#else
     g_GameSettings.fastSP = g_Settings->LoadBool(Game_FastSP);
-#endif
     g_GameSettings.rspAudioSignal = g_Settings->LoadBool(Game_RspAudioSignal);
     g_GameSettings.regCaching = g_Settings->LoadBool(Game_RegCache);
     g_GameSettings.fpuRegCaching = g_Settings->LoadBool(Game_FPURegCache);

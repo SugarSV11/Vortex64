@@ -139,106 +139,6 @@ void CSdlInput::Initiate(CONTROL_INFO * ControlInfo)
     EnsurePumpWindow();
 }
 
-#ifdef _WIN32
-namespace
-{
-const UINT_PTR kPumpTimerId = 1;
-const UINT kPumpMsFast = 16;
-const UINT kPumpMsGameplay = 33;
-const UINT kPumpMsIdle = 50;
-}
-
-LRESULT CALLBACK CSdlInput::PumpWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    CSdlInput * self = nullptr;
-    if (msg == WM_NCCREATE)
-    {
-        CREATESTRUCTW * cs = reinterpret_cast<CREATESTRUCTW *>(lParam);
-        self = static_cast<CSdlInput *>(cs->lpCreateParams);
-        SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(self));
-        return TRUE;
-    }
-    self = reinterpret_cast<CSdlInput *>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
-    if (self == nullptr)
-    {
-        return DefWindowProcW(hwnd, msg, wParam, lParam);
-    }
-    switch (msg)
-    {
-    case WM_TIMER:
-        if (wParam == kPumpTimerId && self->m_SdlInited)
-        {
-            SDL_PumpEvents();
-        }
-        return 0;
-    case WM_DESTROY:
-        KillTimer(hwnd, kPumpTimerId);
-        return 0;
-    default:
-        return DefWindowProcW(hwnd, msg, wParam, lParam);
-    }
-}
-
-void CSdlInput::EnsurePumpWindow(void)
-{
-    if (!m_SdlInited || m_PumpHwnd != nullptr)
-    {
-        return;
-    }
-
-    static const wchar_t kClassName[] = L"PJ64InputSdlEventPump";
-    static bool s_classRegistered = false;
-    if (!s_classRegistered)
-    {
-        WNDCLASSEXW wc = {};
-        wc.cbSize = sizeof(wc);
-        wc.lpfnWndProc = PumpWndProc;
-        wc.hInstance = m_hinst;
-        wc.lpszClassName = kClassName;
-        ATOM atom = RegisterClassExW(&wc);
-        if (atom == 0 && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
-        {
-            return;
-        }
-        s_classRegistered = true;
-    }
-
-    m_PumpHwnd = CreateWindowExW(0, kClassName, L"", 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr, m_hinst, this);
-    if (m_PumpHwnd == nullptr)
-    {
-        return;
-    }
-    ApplyPumpTimerInterval();
-}
-
-void CSdlInput::DestroyPumpWindow(void)
-{
-    if (m_PumpHwnd != nullptr)
-    {
-        DestroyWindow(m_PumpHwnd);
-        m_PumpHwnd = nullptr;
-    }
-}
-
-void CSdlInput::ApplyPumpTimerInterval(void)
-{
-    if (m_PumpHwnd == nullptr)
-    {
-        return;
-    }
-    KillTimer(m_PumpHwnd, kPumpTimerId);
-    UINT interval = kPumpMsIdle;
-    if (m_ConfigDialogOpen || m_ScanActive)
-    {
-        interval = kPumpMsFast;
-    }
-    else if (m_RomOpen)
-    {
-        interval = kPumpMsGameplay;
-    }
-    SetTimer(m_PumpHwnd, kPumpTimerId, interval, nullptr);
-}
-#else
 // On Linux there is no message-pump window: UpdateDeviceData() and
 // ScanDevices() already call SDL_PumpEvents() directly (see ScanDevices'
 // `m_PumpHwnd == nullptr` fast path, which is always true here), so the
@@ -254,7 +154,6 @@ void CSdlInput::DestroyPumpWindow(void)
 void CSdlInput::ApplyPumpTimerInterval(void)
 {
 }
-#endif
 
 void CSdlInput::NotifyConfigDialogOpen(bool open)
 {

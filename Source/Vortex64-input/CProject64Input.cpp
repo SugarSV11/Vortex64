@@ -44,9 +44,6 @@ void CProject64Input::DevicesChanged(void)
 
 void CProject64Input::DeviceAdded(void)
 {
-#ifdef _WIN32
-    ConfigUIDeviceAdded();
-#endif
 }
 
 void CProject64Input::InitiateControllers(CONTROL_INFO * ControlInfo)
@@ -319,22 +316,14 @@ void CProject64Input::LockMouse()
 {
     if (IsMouseUsed() == false) return UnlockMouse();
     if (m_MouseLock == true) return;
-#ifdef _WIN32
-    PostMessage((HWND)m_ControlInfo.hWnd, WM_HIDE_CUROSR, false, 0);
-#else
     SDL_SetRelativeMouseMode(SDL_TRUE);
-#endif
     m_MouseLock = true;
 }
 
 void CProject64Input::UnlockMouse()
 {
     if (m_MouseLock == false) return;
-#ifdef _WIN32
-    PostMessage((HWND)m_ControlInfo.hWnd, WM_HIDE_CUROSR, true, 0);
-#else
     SDL_SetRelativeMouseMode(SDL_FALSE);
-#endif
     m_MouseLock = false;
 }
 
@@ -364,11 +353,6 @@ bool CProject64Input::IsMouseUsed()
 
 void CProject64Input::LockCursor()
 {
-#ifdef _WIN32
-    RECT rect;
-    GetWindowRect((HWND)m_ControlInfo.hWnd, &rect);
-    SetCursorPos((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
-#endif
     // On Linux, LockMouse() already enabled SDL relative-mouse mode, which
     // confines/hides the cursor and reports deltas without needing to
     // re-center it each frame.

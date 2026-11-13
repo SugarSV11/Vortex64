@@ -5,11 +5,7 @@
 // Copyright(C) 2002 Dave2001
 // GNU/GPLv2 licensed: https://gnu.org/licenses/gpl-2.0.html
 
-#ifdef _WIN32
-#include <windows.h>
-#else // _WIN32
 #include <stdlib.h>
-#endif // _WIN32
 #include "glitchmain.h"
 #include <stdio.h>
 #include <Vortex64-video/trace.h>
@@ -43,11 +39,6 @@ typedef struct _texlist
 static int nbTex = 0;
 static texlist *list = nullptr;
 
-#ifdef _WIN32
-extern PFNGLDELETERENDERBUFFERSEXTPROC glDeleteRenderbuffersEXT;
-extern PFNGLDELETEFRAMEBUFFERSEXTPROC glDeleteFramebuffersEXT;
-extern PFNGLCOMPRESSEDTEXIMAGE2DARBPROC glCompressedTexImage2DARB;
-#endif
 void remove_tex(unsigned int idmin, unsigned int idmax)
 {
     unsigned int *t;
@@ -121,10 +112,8 @@ void init_textures()
 
 void free_textures()
 {
-#ifndef WIN32
     // (Comment by Ziggy) For some reasons, Project64 doesn't like remove_tex on exit
     remove_tex(0x00000000, 0xFFFFFFFF);
-#endif
     if (texture != nullptr) {
         free(texture);
         texture = nullptr;

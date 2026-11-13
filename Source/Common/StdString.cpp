@@ -5,9 +5,6 @@
 #include <cstdint>
 #include <cstring>
 #include <malloc.h>
-#ifdef _WIN32
-#include <Windows.h>
-#endif
 
 stdstr::stdstr()
 {
@@ -199,70 +196,6 @@ stdstr & stdstr::Trim(const char * chars2remove)
     return *this;
 }
 
-#ifdef _WIN32
-stdstr & stdstr::FromUTF16(const wchar_t * UTF16Source, bool * bSuccess)
-{
-    bool bConverted = false;
-
-    if (UTF16Source == nullptr)
-    {
-        *this = "";
-        bConverted = true;
-    }
-    else if (wcslen(UTF16Source) > 0)
-    {
-        uint32_t nNeeded = WideCharToMultiByte(CODEPAGE_UTF8, 0, UTF16Source, -1, nullptr, 0, nullptr, nullptr);
-        if (nNeeded > 0)
-        {
-            char * buf = (char *)alloca(nNeeded + 1);
-            if (buf != nullptr)
-            {
-                memset(buf, 0, nNeeded + 1);
-
-                nNeeded = WideCharToMultiByte(CODEPAGE_UTF8, 0, UTF16Source, -1, buf, nNeeded, nullptr, nullptr);
-                if (nNeeded)
-                {
-                    *this = buf;
-                    bConverted = true;
-                }
-            }
-        }
-    }
-    if (bSuccess)
-    {
-        *bSuccess = bConverted;
-    }
-    return *this;
-}
-
-std::wstring stdstr::ToUTF16(unsigned int CodePage, bool * bSuccess) const
-{
-    bool bConverted = false;
-    std::wstring res;
-
-    DWORD nNeeded = MultiByteToWideChar(CodePage, 0, this->c_str(), (int)this->length(), nullptr, 0);
-    if (nNeeded > 0)
-    {
-        wchar_t * buf = (wchar_t *)alloca((nNeeded + 1) * sizeof(wchar_t));
-        if (buf != nullptr)
-        {
-            memset(buf, 0, (nNeeded + 1) * sizeof(wchar_t));
-
-            nNeeded = MultiByteToWideChar(CodePage, 0, this->c_str(), (int)this->length(), buf, nNeeded);
-            if (nNeeded)
-            {
-                res = buf;
-                bConverted = true;
-            }
-        }
-    }
-    if (bSuccess)
-    {
-        *bSuccess = bConverted;
-    }
-    return res;
-}
-#else
 // Unlike Windows (wchar_t is always UTF-16), glibc's wchar_t is UTF-32/UCS-4,
 // so this is a straight Unicode-scalar-value <-> UTF-8 codec rather than a
 // UTF-16 one; the name is kept for API compatibility with the Windows side
@@ -382,7 +315,6 @@ std::wstring stdstr::ToUTF16(unsigned int /*CodePage*/, bool * bSuccess) const
     }
     return res;
 }
-#endif
 
 stdstr_f::stdstr_f(const char * strFormat, ...)
 {
@@ -392,17 +324,3 @@ stdstr_f::stdstr_f(const char * strFormat, ...)
     va_end(args);
 }
 
-#ifdef _WIN32
-stdwstr_f::stdwstr_f(const wchar_t * strFormat, ...)
-{
-    va_list args;
-    va_start(args, strFormat);
-
-    wchar_t Msg[1000];
-    _vsnwprintf(Msg, sizeof(Msg) - 1, strFormat, args);
-
-    va_end(args);
-
-    this->assign(Msg);
-}
-#endif

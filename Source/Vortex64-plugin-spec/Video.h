@@ -56,9 +56,6 @@ typedef struct
     uint32_t * VI_Y_SCALE_REG;
 
     void(*CheckInterrupts)(void);
-#ifdef ANDROID
-    void(CALL *SwapBuffers)(void);
-#endif
 } GFX_INFO;
 
 /*
@@ -215,23 +212,6 @@ Output: none
 */
 EXPORT void CALL ViWidthChanged(void);
 
-#ifdef ANDROID
-/*
-Function: SurfaceCreated
-Purpose: this function is called when the surface is created.
-Input: none
-Output: none
-*/
-EXPORT void CALL SurfaceCreated(void);
-
-/*
-Function: SurfaceChanged
-Purpose: this function is called when the surface is has changed.
-Input: none
-Output: none
-*/
-EXPORT void CALL SurfaceChanged(int width, int height);
-#endif
 
 #if defined(__cplusplus)
 }

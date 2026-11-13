@@ -7,26 +7,14 @@ extern "C" {
 
 #ifndef EXPORT
 #if defined(__cplusplus)
-#if defined(_WIN32)
-#define EXPORT extern "C" __declspec(dllexport)
-#else
 #define EXPORT extern "C" __attribute__((visibility("default")))
-#endif
-#else
-#if defined(_WIN32)
-#define EXPORT __declspec(dllexport)
 #else
 #define EXPORT __attribute__((visibility("default")))
 #endif
 #endif
-#endif
 
 #ifndef CALL
-#if defined(_WIN32)
-#define CALL __cdecl
-#else
 #define CALL
-#endif
 #endif
 
 enum PLUGIN_TYPE

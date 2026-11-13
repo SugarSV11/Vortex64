@@ -47,10 +47,6 @@ bool CGfxPlugin::LoadFunctions(void)
     LoadFunction(ViStatusChanged);
     LoadFunction(ViWidthChanged);
     LoadFunction(SoftReset);
-#ifdef ANDROID
-    LoadFunction(SurfaceCreated);
-    LoadFunction(SurfaceChanged);
-#endif
 
     // Version 0x104 functions
     LoadFunction(DrawStatus);
@@ -212,9 +208,6 @@ bool CGfxPlugin::Initiate_1_4(CN64System * System, RenderWindow * Window)
         uint32_t * VI__Y_SCALE_REG;
 
         void(CALL * CheckInterrupts)(void);
-#ifdef ANDROID
-        void(CALL * SwapBuffers)(void);
-#endif
     } GFX_INFO;
 
     // Get function from DLL
@@ -229,23 +222,12 @@ bool CGfxPlugin::Initiate_1_4(CN64System * System, RenderWindow * Window)
     GFX_INFO Info = {0};
 
     Info.MemoryBswaped = true;
-#if defined(ANDROID) || defined(__ANDROID__)
-    Info.SwapBuffers = SwapBuffers;
-#endif
     Info.hWnd = nullptr;
     Info.hStatusBar = nullptr;
-#ifdef _WIN32
-    if (Window != nullptr)
-    {
-        Info.hWnd = Window->GetWindowHandle();
-        Info.hStatusBar = Window->GetStatusBar();
-    }
-#elif !defined(ANDROID)
     if (Window != nullptr)
     {
         Info.hWnd = Window->GetWindowHandle();
     }
-#endif
     Info.CheckInterrupts = DummyCheckInterrupts;
 
     // We are initializing the plugin before any ROM is loaded so we do not have any correct
@@ -388,9 +370,6 @@ bool CGfxPlugin::Initiate_1_5(CN64System * System, RenderWindow * Window)
         uint32_t * VI__Y_SCALE_REG;
 
         void(CALL * CheckInterrupts)(void);
-#ifdef ANDROID
-        void(CALL * SwapBuffers)(void);
-#endif
     } GFX_INFO;
 
     // Get function from DLL
@@ -405,23 +384,12 @@ bool CGfxPlugin::Initiate_1_5(CN64System * System, RenderWindow * Window)
     GFX_INFO Info = {0};
 
     Info.MemoryBswaped = true;
-#if defined(ANDROID) || defined(__ANDROID__)
-    Info.SwapBuffers = SwapBuffers;
-#endif
     Info.hWnd = nullptr;
     Info.hStatusBar = nullptr;
-#ifdef _WIN32
-    if (Window != nullptr)
-    {
-        Info.hWnd = Window->GetWindowHandle();
-        Info.hStatusBar = Window->GetStatusBar();
-    }
-#elif !defined(ANDROID)
     if (Window != nullptr)
     {
         Info.hWnd = Window->GetWindowHandle();
     }
-#endif
     Info.CheckInterrupts = DummyCheckInterrupts;
 
     // We are initializing the plugin before any ROM is loaded so we do not have any correct
@@ -548,15 +516,3 @@ void CGfxPlugin::UnloadPluginDetails(void)
     WriteTrace(TraceVideoPlugin, TraceDebug, "Done");
 }
 
-#ifdef ANDROID
-void CGfxPlugin::SwapBuffers(void)
-{
-    RenderWindow * render = g_Plugins ? g_Plugins->MainWindow() : nullptr;
-    WriteTrace(TraceVideoPlugin, TraceDebug, "Start (render: %p)", render);
-    if (render != nullptr)
-    {
-        render->SwapWindow();
-    }
-    WriteTrace(TraceVideoPlugin, TraceDebug, "Done");
-}
-#endif

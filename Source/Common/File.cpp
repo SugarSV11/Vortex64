@@ -4,19 +4,9 @@
 #include "path.h"
 #include <stdio.h>
 #include <string.h>
-#ifdef _WIN32
-#include <io.h>
-#define USE_WINDOWS_API
-#include <Windows.h>
-#else
 #include <unistd.h>
-#endif
 
-#if defined(_MSC_VER)
-#include <crtdbg.h>
-#else
 #define _ASSERTE(expr) ((void)0)
-#endif
 
 CFile::CFile() :
 #ifdef USE_WINDOWS_API
@@ -241,9 +231,7 @@ bool CFile::Flush()
     return ::FlushFileBuffers(m_hFile) != 0;
 #else
     fflush((FILE *)m_hFile);
-#ifndef WIN32
     fsync(fileno((FILE *)m_hFile));
-#endif
     return true;
 #endif
 }
@@ -433,10 +421,6 @@ bool CFile::SetEndOfFile()
     return ::SetEndOfFile(m_hFile) != 0;
 #else
     Flush();
-#ifdef _WIN32
-    return _chsize(_fileno((FILE *)m_hFile), GetPosition()) == 0;
-#else
     return ftruncate(fileno((FILE *)m_hFile), GetPosition()) == 0;
-#endif
 #endif
 }

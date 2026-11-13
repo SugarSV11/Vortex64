@@ -252,9 +252,7 @@ public:
     inline bool dirty(void) { return m_dirty; }
 
     //wrapper settings
-#ifndef ANDROID
     inline uint32_t FullScreenRes(void) const { return m_FullScreenRes; }
-#endif
     inline uint32_t RdramSize(void) const { return m_RdramSize; }
     inline uint32_t AllocatedRdramSize(void) const { return m_AllocatedRdramSize; }
     // The memory of the game can change while it runs (a saved state brings its own size): the size the core has now
@@ -296,9 +294,7 @@ public:
     void UpdateFrameBufferBits(uint32_t BitsToAdd, uint32_t BitsToRemove);
     ucode_t DetectUCode(uint32_t uc_crc);
     void SetUcode(ucode_t value);
-#ifndef ANDROID
     void SetFullScreenRes(uint32_t value);
-#endif
     void ReadSettings();
     void ReadGameSettings(const char * name);
     void WriteSettings(void);
@@ -331,9 +327,7 @@ private:
     short m_Set_log_flush;
 
     bool m_dirty;
-#ifndef ANDROID
     uint32_t m_FullScreenRes;
-#endif
     uint32_t m_RdramSize;
     uint32_t m_AllocatedRdramSize;
     int m_wrpVRAM;

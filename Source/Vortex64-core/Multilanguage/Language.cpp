@@ -818,9 +818,3 @@ void CLanguage::ResetStrings(void)
     m_CurrentStrings.clear();
 }
 
-#ifdef _WIN32
-const std::wstring wGS(LanguageStringID StringID)
-{
-    return stdstr(g_Lang->GetString(StringID)).ToUTF16();
-}
-#endif

@@ -6,9 +6,6 @@
 #include "Shortcuts.h"
 #include "Win32CompatTypes.h"
 #include <Common/CriticalSection.h>
-#ifdef _WIN32
-#include "DeviceNotification.h"
-#endif
 #include <SDL.h>
 #include <cstring>
 #include <string>
@@ -153,9 +150,6 @@ private:
     void ApplyPumpTimerInterval(void);
     static LRESULT CALLBACK PumpWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-#ifdef _WIN32
-    DeviceNotification m_DeviceNotification;
-#endif
     DEVICE_MAP m_Devices;
     CriticalSection m_DeviceCS;
     bool m_HotPlugPending = false;

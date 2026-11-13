@@ -4,10 +4,8 @@
 #include "CProject64Input.h"
 #include "InputSettings.h"
 #include <stdio.h>
-#ifndef _WIN32
 #include <dlfcn.h>
 #include <string>
-#endif
 
 /*
 Function: CloseDLL
@@ -19,10 +17,8 @@ Output: None
 
 EXPORT void CALL CloseDLL(void)
 {
-#ifndef _WIN32
     delete g_InputPlugin;
     g_InputPlugin = nullptr;
-#endif
     CleanupInputSettings();
 }
 
@@ -65,16 +61,6 @@ Input: A handle to the window that calls this function.
 Output: None
 */
 
-#ifdef _WIN32
-EXPORT void CALL DllConfig(void * hParent)
-{
-    if (g_InputPlugin != nullptr)
-    {
-        g_InputPlugin->UnlockMouse();
-    }
-    ConfigInput(hParent);
-}
-#else
 // Linux: the configuration sheet is implemented with Qt6 in ConfigQt.cpp, built
 // as libVortex64-input-qtconfig.so next to this plugin and loaded on demand so
 // the plugin has no Qt dependency (the console frontend has no Qt).
@@ -104,7 +90,6 @@ EXPORT void CALL DllConfig(void * hParent)
     }
     dlclose(Module);
 }
-#endif
 
 /*
 Function: DllTest
@@ -287,7 +272,6 @@ EXPORT void CALL WM_KillFocus(uint32_t /*wParam*/, uint32_t /*lParam*/)
 EXPORT void CALL PluginLoaded(void)
 {
     SetupInputSettings();
-#ifndef _WIN32
     // There is no DllMain/DLL_PROCESS_ATTACH on Linux to construct the
     // plugin object, so do it lazily here instead (mirrors AudioMain's
     // PluginInit() pattern). hinst is unused off Windows.
@@ -295,23 +279,5 @@ EXPORT void CALL PluginLoaded(void)
     {
         g_InputPlugin = new CProject64Input(nullptr);
     }
-#endif
 }
 
-#ifdef _WIN32
-#include <Windows.h>
-
-extern "C" int WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID /*lpReserved*/)
-{
-    if (fdwReason == DLL_PROCESS_ATTACH)
-    {
-        g_InputPlugin = new CProject64Input(hinst);
-    }
-    else if (fdwReason == DLL_PROCESS_DETACH)
-    {
-        delete g_InputPlugin;
-        g_InputPlugin = nullptr;
-    }
-    return TRUE;
-}
-#endif

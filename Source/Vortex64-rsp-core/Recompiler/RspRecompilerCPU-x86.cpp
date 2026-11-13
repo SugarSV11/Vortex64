@@ -1003,26 +1003,9 @@ void CRSPRecompiler::RunCPU(void)
             }
 
             memset(&RspCode, 0, sizeof(RspCode));
-#if defined(_MSC_VER)
-            __try
-            {
-                BuildBranchLabels();
-                DetectGPRConstants(&RspCode);
-                CompilerRSPBlock();
-            }
-            __except (EXCEPTION_EXECUTE_HANDLER)
-            {
-                char ErrorMessage[400];
-                sprintf(ErrorMessage, "Error m_CompilePC = %08X", m_CompilePC);
-                g_Notify->DisplayError(ErrorMessage);
-                ClearAllx86Code();
-                continue;
-            }
-#else
             BuildBranchLabels();
             DetectGPRConstants(&RspCode);
             CompilerRSPBlock();
-#endif
 
             Block = (uint8_t *)*(JumpTable + (*m_System.m_SP_PC_REG >> 2));
 
@@ -1042,15 +1025,7 @@ void CRSPRecompiler::RunCPU(void)
             StartTimer(*m_System.m_SP_PC_REG);
         }
 
-#if defined(_M_IX86) && defined(_MSC_VER)
-        _asm {
-			pushad
-			call Block
-			popad
-        }
-#else
         g_Notify->BreakPoint(__FILE__, __LINE__);
-#endif
         if (Profiling && IndvidualBlock)
         {
             StopTimer();
@@ -1063,11 +1038,7 @@ void CRSPRecompiler::RunCPU(void)
 
     if (IsMmxEnabled)
     {
-#if defined(_M_IX86) && defined(_MSC_VER)
-        _asm emms
-#else
         g_Notify->BreakPoint(__FILE__, __LINE__);
-#endif
     }
 }
 

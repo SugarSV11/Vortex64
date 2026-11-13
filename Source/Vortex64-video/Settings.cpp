@@ -79,9 +79,7 @@ CSettings::CSettings() :
     m_hacks((hacks_t)0),
 
     //wrapper settings
-#ifndef ANDROID
     m_FullScreenRes(0),
-#endif
     m_RdramSize(0),
     m_AllocatedRdramSize(0),
     m_wrpVRAM(0),
@@ -130,11 +128,7 @@ void CSettings::RegisterSettings(void)
     general_setting(Set_vsync, "vsync", true);
     general_setting(Set_texenh_options, "texenh_options", false);
     general_setting(Set_wrpVRAM, "wrpVRAM", 0);
-#ifndef ANDROID
     general_setting(Set_wrpFBO, "wrpFBO", false);
-#else
-    general_setting(Set_wrpFBO, "wrpFBO", true);
-#endif
     general_setting(Set_Rotate, "rotate", Rotate_None);
     general_setting(Set_wrpAnisotropic, "wrpAnisotropic", false);
     general_setting(Set_autodetect_ucode, "autodetect_ucode", true);
@@ -190,9 +184,7 @@ void CSettings::RegisterSettings(void)
     RegisterSetting(Set_Logging_OGLWrapper, Data_DWORD_General, "OGLWrapper", "Logging", g_ModuleLogLevel[TraceOGLWrapper], nullptr);
     RegisterSetting(Set_Logging_RDPCommands, Data_DWORD_General, "RDPCommands", "Logging", g_ModuleLogLevel[TraceRDPCommands], nullptr);
 
-#ifndef ANDROID
     general_setting(Set_FullScreenRes, "FullScreenRes", GetCurrentResIndex());
-#endif
 
     game_setting(Set_alt_tex_size, "alt_tex_size", false);
     game_setting(Set_use_sts1_only, "use_sts1_only", false);
@@ -548,7 +540,6 @@ void CSettings::SetUcode(ucode_t value)
     m_ucode = value;
 }
 
-#ifndef ANDROID
 void CSettings::SetFullScreenRes(uint32_t value)
 {
     if (value != m_FullScreenRes)
@@ -557,14 +548,11 @@ void CSettings::SetFullScreenRes(uint32_t value)
         m_dirty = true;
     }
 }
-#endif
 
 void CSettings::ReadSettings()
 {
     SetScreenRes(GetSetting(Set_Resolution));
-#ifndef ANDROID
     SetFullScreenRes(GetSetting(Set_FullScreenRes));
-#endif
     m_vsync = GetSetting(Set_vsync) != 0;
     m_rotate = (ScreenRotate_t)GetSetting(Set_Rotate);
     m_advanced_options = m_Set_basic_mode ? GetSystemSetting(m_Set_basic_mode) == 0 : false;
@@ -845,9 +833,7 @@ void CSettings::WriteSettings(void)
 {
     m_InWriteSettings = true;
     SetSetting(Set_Resolution, m_ScreenRes);
-#ifndef ANDROID
     SetSetting(Set_FullScreenRes, m_FullScreenRes);
-#endif
     SetSetting(Set_vsync, m_vsync ? 1 : 0);
     SetSetting(Set_Rotate, m_rotate);
     SetSetting(Set_texenh_options, m_texenh_options);

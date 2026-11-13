@@ -135,11 +135,7 @@ void CX64Ops::AddLabelSymbol(const asmjit::Label & Label, const char * Symbol)
         }
         else
         {
-#ifdef _WIN32
-            __debugbreak();
-#else
             __builtin_trap();
-#endif
         }
     }
     else

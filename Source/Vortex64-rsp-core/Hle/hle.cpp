@@ -9,9 +9,6 @@
 #include "hle.h"
 #include <Vortex64-rsp-core/cpu/RspSystem.h>
 #include <stdint.h>
-#if defined(_WIN32) && defined(_DEBUG)
-#include <Windows.h>
-#endif
 #include "mem.h"
 #include "ucodes.h"
 #include <memory.h>
@@ -276,17 +273,8 @@ void CHle::non_task_dispatching(void)
 
 void CHle::VerboseMessage(const char * /*message*/, ...)
 {
-#if defined(_WIN32) && defined(_DEBUG)
-    // These can get annoying
-#if 0
-    MessageBox(NULL, message, "HLE verbose message", MB_OK);
-#endif
-#endif
 }
 
 void CHle::WarnMessage(const char * message, ...)
 {
-#if defined(_WIN32) && defined(_DEBUG)
-    MessageBoxA(NULL, message, "HLE warning message", MB_OK);
-#endif
 }

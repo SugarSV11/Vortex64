@@ -25,11 +25,7 @@ typedef uint8_t  uint8;
 typedef uint16_t uint16;
 typedef uint32_t  uint32;
 
-#ifdef _WIN32
-#define KBHIT(key) ((GetAsyncKeyState(key) & 0x8001) == 0x8001)
-#else
 #define KBHIT(key) (0)
-#endif
 
 // From OpenGL glext.h
 #define GL_COMPRESSED_RGB_S3TC_DXT1_EXT   0x83F0

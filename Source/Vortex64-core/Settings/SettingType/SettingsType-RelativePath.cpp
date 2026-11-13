@@ -68,7 +68,6 @@ void CSettingTypeRelativePath::Delete(uint32_t /*Index*/)
 
 void CSettingTypeRelativePath::BuildPath(void)
 {
-#if !defined(_WIN32) && !defined(ANDROID)
     // XDG Base Directory Specification: pure user data (saves, screenshots,
     // custom textures, logs) lives under ~/.local/share, not next to the
     // installed binary. "Config" is handled per-file rather than by
@@ -110,7 +109,6 @@ void CSettingTypeRelativePath::BuildPath(void)
         m_FullPath = (const char *)FullPath;
         return;
     }
-#endif
     CPath FullPath(g_Settings->LoadStringVal(Cmd_BaseDirectory).c_str(), "");
     FullPath.AppendDirectory(m_Directory.c_str());
     FullPath.SetNameExtension(m_FileName.c_str());

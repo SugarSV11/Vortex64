@@ -9,22 +9,13 @@
 #include <Vortex64-rsp-core/Settings/RspSettings.h>
 #include <Settings/Settings.h>
 #include <chrono>
-#ifdef _MSC_VER
-#include <intrin.h>
-#else
 // __rdtsc()/_mm_lfence() come from <intrin.h> on MSVC and <x86intrin.h> on
 // GCC/Clang.
 #include <x86intrin.h>
-#endif
 #include <map>
 #include <thread>
 #include <vector>
-#ifndef _WIN32
 #include <sched.h>
-#endif
-#ifdef WIN32
-#include <Windows.h>
-#endif
 
 class CRspProfiling
 {
@@ -38,11 +29,7 @@ class CRspProfiling
     } TIMER_NAME;
 
     uint32_t m_CurrentTimerAddr, CurrentDisplayCount;
-#if defined(_M_IX86) && defined(_MSC_VER)
-    uint32_t m_StartTimeHi, m_StartTimeLo; // The current timer start time
-#else
     uint64_t m_StartTime;
-#endif
     PROFILE_ENRTIES m_Entries;
     double m_CpuFrequencyGHz;
 
@@ -50,10 +37,6 @@ public:
     CRspProfiling()
     {
         m_CurrentTimerAddr = Timer_None;
-#ifdef WIN32
-        LARGE_INTEGER frequency;
-        QueryPerformanceFrequency(&frequency);
-#endif
         m_CpuFrequencyGHz = MeasureCpuFrequencyGHz();
     }
 
@@ -62,22 +45,9 @@ public:
         uint32_t OldTimerAddr = StopTimer();
         m_CurrentTimerAddr = Address;
 
-#if defined(_M_IX86) && defined(_MSC_VER)
-        uint32_t HiValue, LoValue;
-        _asm {
-			pushad
-			rdtsc
-			mov HiValue, edx
-			mov LoValue, eax
-			popad
-        }
-        m_StartTimeHi = HiValue;
-        m_StartTimeLo = LoValue;
-#else
         _mm_lfence();
         m_StartTime = __rdtsc();
         _mm_lfence();
-#endif
         return OldTimerAddr;
     }
     uint32_t StopTimer(void)
@@ -87,25 +57,10 @@ public:
             return m_CurrentTimerAddr;
         }
 
-#if defined(_M_IX86) && defined(_MSC_VER)
-        uint32_t HiValue, LoValue;
-        _asm {
-			pushad
-			rdtsc
-			mov HiValue, edx
-			mov LoValue, eax
-			popad
-        }
-
-        int64_t StopTime = ((uint64_t)HiValue << 32) + (uint64_t)LoValue;
-        int64_t StartTime = ((uint64_t)m_StartTimeHi << 32) + (uint64_t)m_StartTimeLo;
-        int64_t TimeTaken = StopTime - StartTime;
-#else
         _mm_lfence();
         uint64_t currentTime = __rdtsc();
         _mm_lfence();
         int64_t TimeTaken = currentTime - m_StartTime;
-#endif
         PROFILE_ENRTY Entry = m_Entries.find(m_CurrentTimerAddr);
         if (Entry != m_Entries.end())
         {
@@ -140,9 +95,6 @@ public:
         // thread when used with the thread's tid, but for a whole-process
         // pin here getpid() matches what the Windows side does with the
         // current thread's process-wide affinity mask).
-#ifdef _WIN32
-        DWORD_PTR oldMask = SetThreadAffinityMask(GetCurrentThread(), 1);
-#else
         cpu_set_t oldMask;
         CPU_ZERO(&oldMask);
         sched_getaffinity(0, sizeof(oldMask), &oldMask);
@@ -150,17 +102,12 @@ public:
         CPU_ZERO(&pinnedMask);
         CPU_SET(0, &pinnedMask);
         sched_setaffinity(0, sizeof(pinnedMask), &pinnedMask);
-#endif
         auto start_time = std::chrono::high_resolution_clock::now();
         uint64_t start_cycles = __rdtsc();
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         uint64_t end_cycles = __rdtsc();
         auto end_time = std::chrono::high_resolution_clock::now();
-#ifdef _WIN32
-        SetThreadAffinityMask(GetCurrentThread(), oldMask);
-#else
         sched_setaffinity(0, sizeof(oldMask), &oldMask);
-#endif
         double elapsed_seconds = std::chrono::duration<double>(end_time - start_time).count();
         uint64_t elapsed_cycles = end_cycles - start_cycles;
         return static_cast<double>(elapsed_cycles) / (elapsed_seconds * 1e9);

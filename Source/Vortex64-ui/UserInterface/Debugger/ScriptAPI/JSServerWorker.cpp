@@ -68,14 +68,12 @@ void CJSServerWorker::WorkerProc()
         goto stop_cleanup;
     }
 
-#ifndef _WIN32
     // BSD sockets refuse to bind a port that still has connections in TIME_WAIT (a server that
     // is restarted, a script that is run again); Winsock does not
     {
         int reuse = 1;
         setsockopt(m_ServerSocket, SOL_SOCKET, SO_REUSEADDR, (const char *)&reuse, sizeof(reuse));
     }
-#endif
 
     rc = ioctlsocket(m_ServerSocket, FIONBIO, &nonBlock);
     if (rc == SOCKET_ERROR)

@@ -69,16 +69,5 @@ void CDiscord::Update(bool bHaveGame)
 
 int64_t CDiscord::Timestamp()
 {
-#ifndef _WIN32
     return (int64_t)time(nullptr);
-#else
-    FILETIME ft;
-    GetSystemTimeAsFileTime(&ft);
-
-    LARGE_INTEGER li;
-    li.LowPart = ft.dwLowDateTime;
-    li.HighPart = ft.dwHighDateTime;
-
-    return (li.QuadPart - UNIX_TIME_START) / TICKS_PER_SECOND;
-#endif
 }

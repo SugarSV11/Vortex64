@@ -5,14 +5,7 @@ extern "C"
 {
 #endif
 
-#if defined(ANDROID) || defined(__ANDROID__)
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
-
-typedef unsigned int     GLenum;
-#else
 #include <GL/gl.h>              // Header file for the OpenGL library
-#endif
 
 #ifndef APIENTRY
 #define APIENTRY

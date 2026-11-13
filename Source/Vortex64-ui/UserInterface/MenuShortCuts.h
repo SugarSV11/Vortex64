@@ -142,9 +142,6 @@ public:
 
     std::wstring ShortCutString(int MenuID, RUNNING_STATE RunningState);
     LangStr GetMenuItemName(WORD key, bool bCtrl, bool bAlt, bool bShift, RUNNING_STATE RunningState);
-#ifdef _WIN32
-    HACCEL GetAcceleratorTable(void);
-#endif
     const MSC_MAP & GetShortCuts(void) const
     {
         return m_ShortCuts;

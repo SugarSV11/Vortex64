@@ -686,13 +686,7 @@ void CleanupInputSettings(void)
     }
 }
 
-#ifdef _WIN32
-#include <Windows.h>
-#endif
 
 extern "C" void UseUnregisteredSetting(int /*SettingID*/)
 {
-#ifdef _WIN32
-    DebugBreak();
-#endif
 }

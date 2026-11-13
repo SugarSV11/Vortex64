@@ -17,13 +17,6 @@ static constexpr uint32_t kX64AllocatableRegIds[] = {
     asmjit::x86::Gp::kIdR13,
     asmjit::x86::Gp::kIdR14,
     asmjit::x86::Gp::kIdR15,
-#if defined(_WIN32)
-    // rdi/rsi are Arg0/Arg1 of the System V ABI, so they are left out of the
-    // register cache there: setting up call arguments can then never
-    // overwrite a cached MIPS register.
-    asmjit::x86::Gp::kIdDi,
-    asmjit::x86::Gp::kIdSi,
-#endif
     asmjit::x86::Gp::kIdBp,
     asmjit::x86::Gp::kIdAx,
     asmjit::x86::Gp::kIdCx,

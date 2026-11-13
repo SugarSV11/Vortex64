@@ -138,15 +138,10 @@ bool CN64Rom::AllocateAndLoadN64Image(const char * FileLoc, bool LoadBootCodeOnl
 bool CN64Rom::AllocateAndLoadZipImage(const char * FileLoc, bool LoadBootCodeOnly)
 {
     zlib_filefunc64_def ffunc;
-#ifdef _WIN32
-    fill_win32_filefunc64W(&ffunc);
-    unzFile file = unzOpen2_64(stdstr(FileLoc).ToUTF16().c_str(), &ffunc);
-#else
     // No Win32 wide-char file API on Linux; use minizip's portable fopen64
     // based I/O layer with the path as-is (already UTF-8 on Linux).
     fill_fopen64_filefunc(&ffunc);
     unzFile file = unzOpen2_64(FileLoc, &ffunc);
-#endif
     if (file == nullptr)
     {
         return false;

@@ -7,12 +7,8 @@
 
 #include <Vortex64-video/Renderer/Renderer.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#else // _WIN32
 #include <string.h>
 #include <stdlib.h>
-#endif // _WIN32
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,10 +31,6 @@ static int chroma_other_alpha;
 static int dither_enabled;
 int blackandwhite0;
 int blackandwhite1;
-#ifdef _WIN32
-static float farF;
-static float nearF;
-#endif // _WIN32
 
 int need_lambda[2];
 float lambda_color[2][4];

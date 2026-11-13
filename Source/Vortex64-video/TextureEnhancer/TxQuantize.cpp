@@ -5,9 +5,6 @@
 // Copyright(C) 2003 Rice1964
 // GNU/GPLv2 licensed: https://gnu.org/licenses/gpl-2.0.html
 
-#ifdef WIN32
-#pragma warning(disable: 4786)
-#endif
 
 // NOTE: The code is not optimized. It can be made faster.
 

@@ -98,9 +98,6 @@ void CEnhancements::UpdateCheats(const CEnhancementList & Cheats)
     std::string GameName = g_Settings->LoadStringVal(Rdb_GoodName);
     std::string SectionIdent = g_Settings->LoadStringVal(Game_IniKey);
     CPath OutFile(g_Settings->LoadStringVal(SupportFile_UserCheatDir), stdstr_f("%s.cht", GameName.c_str()).c_str());
-#ifdef _WIN32
-    OutFile.NormalizePath(CPath(CPath::MODULE_DIRECTORY));
-#endif
 
     CGuard Guard(m_CS);
     if (m_CheatFile.get() == nullptr || strcmp(m_CheatFile->FileName(), OutFile) != 0)
@@ -144,9 +141,6 @@ void CEnhancements::UpdateEnhancements(const CEnhancementList & Enhancements)
     std::string GameName = g_Settings->LoadStringVal(Rdb_GoodName);
     std::string SectionIdent = g_Settings->LoadStringVal(Game_IniKey);
     CPath OutFile(g_Settings->LoadStringVal(SupportFile_UserEnhancementDir), stdstr_f("%s.enh", GameName.c_str()).c_str());
-#ifdef _WIN32
-    OutFile.NormalizePath(CPath(CPath::MODULE_DIRECTORY));
-#endif
 
     CGuard Guard(m_CS);
     if (m_EnhancementFile.get() == nullptr || strcmp(m_EnhancementFile->FileName(), OutFile) != 0)
@@ -627,9 +621,6 @@ void CEnhancements::ScanFileThread(void)
 {
     SectionFiles CheatFiles;
     CPath File(g_Settings->LoadStringVal(SupportFile_CheatDir), "*.cht");
-#ifdef _WIN32
-    File.NormalizePath(CPath(CPath::MODULE_DIRECTORY));
-#endif
     if (File.FindFirst() && m_Scan)
     {
         do
@@ -645,9 +636,6 @@ void CEnhancements::ScanFileThread(void)
     }
 
     File = CPath(g_Settings->LoadStringVal(SupportFile_UserCheatDir), "*.cht");
-#ifdef _WIN32
-    File.NormalizePath(CPath(CPath::MODULE_DIRECTORY));
-#endif
     if (m_Scan && File.FindFirst())
     {
         do
@@ -663,9 +651,6 @@ void CEnhancements::ScanFileThread(void)
     }
 
     File = CPath(g_Settings->LoadStringVal(SupportFile_EnhancementDir), "*.enh");
-#ifdef _WIN32
-    File.NormalizePath(CPath(CPath::MODULE_DIRECTORY));
-#endif
     SectionFiles EnhancementFiles;
     if (File.FindFirst() && m_Scan)
     {
@@ -682,9 +667,6 @@ void CEnhancements::ScanFileThread(void)
     }
 
     File = CPath(g_Settings->LoadStringVal(SupportFile_UserEnhancementDir), "*.enh");
-#ifdef _WIN32
-    File.NormalizePath(CPath(CPath::MODULE_DIRECTORY));
-#endif
     if (m_Scan && File.FindFirst())
     {
         do

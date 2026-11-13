@@ -15,12 +15,7 @@
 #include <Vortex64-core/N64System/SystemGlobals.h>
 #include <float.h>
 #include <time.h>
-#if defined(ANDROID)
-#include <utime.h>
-#endif
-#ifndef _WIN32
 #include <cxxabi.h>
-#endif
 
 #pragma warning(disable : 4355) // Disable 'this' : used in base member initializer list
 
@@ -764,14 +759,12 @@ bool CN64System::EmulationStarting(CThread * thread)
                 WriteTrace(TraceN64System, TraceDebug, "64DD Save Done");
             }
         }
-#ifndef _WIN32
         // pthread_cancel (CThread::Terminate) unwinds the thread with an exception that
         // must not be swallowed; Windows' TerminateThread does not run handlers
         catch (const __cxxabiv1::__forced_unwind &)
         {
             throw;
         }
-#endif
         catch (...)
         {
             g_Notify->DisplayError(stdstr_f("%s: Exception caught\nFile: %s\nLine: %d", __FUNCTION__, __FILE__, __LINE__).c_str());
@@ -915,9 +908,6 @@ void CN64System::PluginReset()
     {
         m_SyncCPU->m_Plugins->RomOpened();
     }
-#ifdef _WIN32
-    _controlfp(_PC_53, _MCW_PC);
-#endif
 }
 
 void CN64System::ApplyGSButton(void)
@@ -1053,9 +1043,6 @@ void CN64System::ExecuteCPU()
     {
         g_Debugger->EmulationStarted();
     }
-#if defined(_WIN32) && (defined(__i386__) || defined(_M_IX86))
-    _controlfp(_PC_53, _MCW_PC);
-#endif
 
     CPU_TYPE cpuType;
 
@@ -1662,9 +1649,6 @@ bool CN64System::SaveState()
         {
             SaveFile.AppendDirectory(g_Settings->LoadStringVal(Game_UniqueSaveDir).c_str());
         }
-#ifdef _WIN32
-        SaveFile.NormalizePath(CPath(CPath::MODULE_DIRECTORY));
-#endif
         SaveFile.SetName(g_Settings->LoadStringVal(Rdb_GoodName).c_str());
         g_Settings->SaveDword(Game_LastSaveSlot, g_Settings->LoadDword(Game_CurrentSaveState));
     }
@@ -1753,9 +1737,6 @@ bool CN64System::SaveState()
         zipCloseFileInZip(file);
 
         zipClose(file, "");
-#if defined(ANDROID)
-        utimes((const char *)ZipFile, nullptr);
-#endif
     }
     else
     {
@@ -1852,9 +1833,6 @@ bool CN64System::LoadState()
     {
         FileName.AppendDirectory(g_Settings->LoadStringVal(Game_UniqueSaveDir).c_str());
     }
-#ifdef _WIN32
-    FileName.NormalizePath(CPath(CPath::MODULE_DIRECTORY));
-#endif
     if (g_Settings->LoadDword(Game_CurrentSaveState) != 0)
     {
         FileName.SetNameExtension(stdstr_f("%s.pj%d", g_Settings->LoadStringVal(Rdb_GoodName).c_str(), g_Settings->LoadDword(Game_CurrentSaveState)).c_str());
@@ -1938,13 +1916,8 @@ bool CN64System::LoadState(const char * FileName)
             SaveFile.SetNameExtension(stdstr_f("%s.zip", SaveFile.GetNameExtension().c_str()).c_str());
         }
         zlib_filefunc64_def ffunc;
-#ifdef _WIN32
-        fill_win32_filefunc64W(&ffunc);
-        unzFile file = unzOpen2_64(stdstr(std::string(SaveFile)).ToUTF16().c_str(), &ffunc);
-#else
         fill_fopen64_filefunc(&ffunc);
         unzFile file = unzOpen2_64(stdstr(std::string(SaveFile)).c_str(), &ffunc);
-#endif
         int port = -1;
         if (file != nullptr)
         {

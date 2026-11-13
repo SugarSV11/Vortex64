@@ -8,11 +8,7 @@
 #include <Vortex64-core/N64System/N64System.h>
 #include <Vortex64-core/N64System/SystemGlobals.h>
 
-#ifdef _WIN32
-#include <Windows.h>
-#else
 #include <sys/time.h>
-#endif
 
 uint8_t dd_swapdelay;
 
@@ -27,18 +23,6 @@ void DiskCommand()
     uint32_t cmd = g_Reg->ASIC_CMD;
     WriteTrace(TraceN64System, TraceDebug, "N64DD CMD %08X - DATA %08X", cmd, g_Reg->ASIC_DATA);
 
-#ifdef _WIN32
-    SYSTEMTIME sysTime;
-    ::GetLocalTime(&sysTime);
-
-    // BCD format needed for 64DD RTC
-    uint8_t year = (uint8_t)(((sysTime.wYear / 10 % 10) << 4) | (sysTime.wYear % 10));
-    uint8_t month = (uint8_t)(((sysTime.wMonth / 10) << 4) | (sysTime.wMonth % 10));
-    uint8_t day = (uint8_t)(((sysTime.wDay / 10) << 4) | (sysTime.wDay % 10));
-    uint8_t hour = (uint8_t)(((sysTime.wHour / 10) << 4) | (sysTime.wHour % 10));
-    uint8_t minute = (uint8_t)(((sysTime.wMinute / 10) << 4) | (sysTime.wMinute % 10));
-    uint8_t second = (uint8_t)(((sysTime.wSecond / 10) << 4) | (sysTime.wSecond % 10));
-#else
     time_t ltime;
     ltime = time(&ltime);
 
@@ -52,7 +36,6 @@ void DiskCommand()
     uint8_t hour = (uint8_t)(((result.tm_hour / 10) << 4) | (result.tm_hour % 10));
     uint8_t minute = (uint8_t)(((result.tm_min / 10) << 4) | (result.tm_min % 10));
     uint8_t second = (uint8_t)(((result.tm_sec / 10) << 4) | (result.tm_sec % 10));
-#endif
 
     // Used for seek times
     bool isSeek = false;

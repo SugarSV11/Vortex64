@@ -9,10 +9,6 @@
 #include <Vortex64-core/N64System/SystemGlobals.h>
 #include <string.h>
 
-#if defined(ANDROID) && (defined(__arm__) || defined(_M_ARM))
-/* bug-fix to implement __clear_cache (missing in Android; http://code.google.com/p/android/issues/detail?id=1803) */
-extern "C" void __clear_cache_android(uint8_t * begin, uint8_t * end);
-#endif
 
 CCodeBlock::CCodeBlock(CN64System & System, uint32_t VAddrEnter) :
     m_Recompiler(*System.m_Recomp),
@@ -934,9 +930,6 @@ uint32_t CCodeBlock::Finilize(CRecompMemory & RecompMem)
     m_CodeHolder.copyFlattenedData(m_CompiledLocationCold, codeSize, asmjit::CopySectionFlags::kPadSectionBuffer);
     m_Recompiler.RecompPos() += codeSize;
 
-#if defined(ANDROID) && (defined(__arm__) || defined(_M_ARM))
-    __clear_cache((uint8_t *)((uint32_t)m_CompiledLocationCold & ~1), m_CompiledLocationCold + codeSize);
-#endif
     return (uint32_t)codeSize;
 }
 

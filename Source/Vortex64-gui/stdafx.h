@@ -24,7 +24,6 @@
 #include <map>
 #include <string>
 #include "MainMenuID.h"
-#ifndef _WIN32
 typedef uint16_t WORD;
 typedef const wchar_t * LPCTSTR;
 #ifndef TRUE
@@ -44,12 +43,10 @@ typedef const wchar_t * LPCTSTR;
 #define VK_F12 0x7B
 #define VK_OEM_PLUS 0xBB
 #define VK_OEM_MINUS 0xBD
-#endif
 #include <Vortex64-ui/UserInterface/MenuShortCuts.h>
 
 // Names of <windows.h>/MSVC and of the upstream stdafx (using namespace std) that the
 // debugger back end (Project64/UserInterface/Debugger) compiled unchanged relies on.
-#ifndef _WIN32
 #include <set>
 #include <vector>
 #include <string.h>
@@ -69,6 +66,5 @@ using std::sort;
 // Implemented in Debugger/DebugCommon.cpp with a Qt message box (blocks the caller;
 // safe from the emulation thread)
 int MessageBox(void * Parent, const wchar_t * Text, const wchar_t * Caption, unsigned Type);
-#endif
 
 #include "Debugger/DebuggerUI.h"

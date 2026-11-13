@@ -23,14 +23,6 @@
 #include <Settings/Settings.h>
 #include <Vortex64-plugin-spec/Video.h>
 
-#ifdef _WIN32
-#include <Common/CriticalSection.h>
-
-extern CriticalSection * g_ProcessDListCS;
-#ifndef _WIN32
-void ConfigReinitIfRequested(void);
-#endif
-#endif
 
 const char *ACmp[] = { "NONE", "THRESHOLD", "UNKNOWN", "DITHER" };
 
@@ -745,12 +737,7 @@ int depth_buffer_fog;
 
 EXPORT void CALL ProcessDList(void)
 {
-#ifdef _WIN32
-    CGuard guard(*g_ProcessDListCS);
-#endif
-#ifndef _WIN32
     ConfigReinitIfRequested();
-#endif
     if (!GfxInitDone)
     {
         // RomOpen() -> InitGfx() (Main.cpp) can fail (window/GL context
@@ -4218,9 +4205,6 @@ output:   none
 *******************************************************************/
 void CALL ProcessRDPList(void)
 {
-#ifdef _WIN32
-    CGuard guard(*g_ProcessDListCS);
-#endif
     WriteTrace(TraceGlide64, TraceDebug, "-");
 
     no_dlist = false;

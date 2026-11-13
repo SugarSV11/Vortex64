@@ -9,9 +9,6 @@
 #include <Vortex64-video/rdp.h>
 #include <Vortex64-video/Settings.h>
 #include <stdio.h>
-#ifdef _WIN32
-#include <windows.h>
-#endif // _WIN32
 #include "glitchmain.h"
 #include <Vortex64-video/trace.h>
 

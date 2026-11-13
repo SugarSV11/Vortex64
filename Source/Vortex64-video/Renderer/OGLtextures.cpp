@@ -6,11 +6,7 @@
 // GNU/GPLv2 licensed: https://gnu.org/licenses/gpl-2.0.html
 
 #include <Vortex64-video/Renderer/Renderer.h>
-#ifdef _WIN32
-#include <windows.h>
-#else // _WIN32
 #include <stdlib.h>
-#endif // _WIN32
 #include "glitchmain.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,11 +40,9 @@ typedef struct _texlist
 static int nbTex = 0;
 static texlist *list = nullptr;
 
-#if !defined(__ANDROID__) && !defined(ANDROID)
 extern PFNGLDELETERENDERBUFFERSEXTPROC pj64_glDeleteRenderbuffersEXT;
 extern PFNGLDELETEFRAMEBUFFERSEXTPROC pj64_glDeleteFramebuffersEXT;
 extern PFNGLCOMPRESSEDTEXIMAGE2DARBPROC pj64_glCompressedTexImage2DARB;
-#endif
 void remove_tex(unsigned int idmin, unsigned int idmax)
 {
     unsigned int *t;
@@ -122,10 +116,8 @@ void init_textures()
 
 void free_textures()
 {
-#ifndef WIN32
     // (Comment by Ziggy) For some reason, Project64 doesn't like remove_tex on exit
     remove_tex(0x00000000, 0xFFFFFFFF);
-#endif
     if (texture != nullptr) {
         free(texture);
         texture = nullptr;

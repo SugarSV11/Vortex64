@@ -2,9 +2,7 @@
 
 #include <Vortex64-core/Multilanguage.h>
 
-#ifndef _MSC_VER
 #define __interface struct
-#endif
 
 __interface CNotification
 {

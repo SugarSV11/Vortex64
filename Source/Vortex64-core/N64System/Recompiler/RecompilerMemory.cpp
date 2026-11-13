@@ -4,12 +4,9 @@
 #include <Vortex64-core/N64System/Recompiler/Recompiler.h>
 #include <Vortex64-core/N64System/Recompiler/RecompilerMemory.h>
 #include <Vortex64-core/N64System/SystemGlobals.h>
-#ifndef _WIN32
 #include <sys/mman.h>
 #include <stdint.h>
-#endif
 
-#ifndef _WIN32
 // The generated code addresses RDRAM (and other emulator memory) with rip-relative
 // operands, which reach +-2GB. On Windows both reservations are MEM_TOP_DOWN and end
 // up next to each other; a plain mmap() can leave them further apart, and asmjit then
@@ -46,7 +43,6 @@ static uint8_t * AllocateNearAddress(size_t Size, uint8_t * Reference)
     }
     return nullptr;
 }
-#endif
 
 CRecompMemory::CRecompMemory() :
     m_RecompCode(nullptr),
@@ -69,11 +65,7 @@ bool CRecompMemory::AllocateMemory(uint8_t * NearAddress)
 {
     WriteTrace(TraceRecompiler, TraceDebug, "Start");
     uint8_t * RecompCodeBase = nullptr;
-#ifndef _WIN32
     RecompCodeBase = AllocateNearAddress(MaxCompileBufferSize + 4, NearAddress);
-#else
-    (void)NearAddress;
-#endif
     if (RecompCodeBase == nullptr)
     {
         RecompCodeBase = (uint8_t *)AllocateAddressSpace(MaxCompileBufferSize + 4);

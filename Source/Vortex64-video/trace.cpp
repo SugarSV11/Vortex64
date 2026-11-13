@@ -7,31 +7,6 @@
 #include <Common/path.h>
 #include <Common/Log.h>
 
-#ifdef ANDROID
-#include <android/log.h>
-
-class AndroidLogger : public CTraceModule
-{
-    void Write(uint32_t module, uint8_t severity, const char * file, int line, const char * function, const char * Message)
-    {
-        switch (severity)
-        {
-        case TraceError: __android_log_print(ANDROID_LOG_ERROR, TraceModule(module), "%s: %s", function, Message); break;
-        case TraceWarning:  __android_log_print(ANDROID_LOG_WARN, TraceModule(module), "%s: %s", function, Message); break;
-        case TraceNotice: __android_log_print(ANDROID_LOG_INFO, TraceModule(module), "%s: %s", function, Message); break;
-        case TraceInfo: __android_log_print(ANDROID_LOG_INFO, TraceModule(module), "%s: %s", function, Message); break;
-        case TraceDebug: __android_log_print(ANDROID_LOG_DEBUG, TraceModule(module), "%s: %s", function, Message); break;
-        case TraceVerbose: __android_log_print(ANDROID_LOG_VERBOSE, TraceModule(module), "%s: %s", function, Message); break;
-        default: __android_log_print(ANDROID_LOG_UNKNOWN, TraceModule(module), "%s: %s", function, Message); break;
-        }
-    }
-
-    void FlushTrace(void)
-    {
-    }
-};
-static AndroidLogger * g_AndroidLogger = nullptr;
-#endif
 
 static CTraceFileLog * g_LogFile = nullptr;
 
@@ -42,13 +17,6 @@ void SetupTrace(void)
         return;
     }
 
-#ifdef ANDROID
-    if (g_AndroidLogger == nullptr)
-    {
-        g_AndroidLogger = new AndroidLogger();
-    }
-    TraceAddModule(g_AndroidLogger);
-#endif
 #ifdef _DEBUG
     TraceSetMaxModule(MaxTraceModuleGlide64, TraceInfo);
 #else

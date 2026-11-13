@@ -12,9 +12,6 @@
 #include <stdlib.h>
 #include <Vortex64-video/Renderer/types.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
 // External libraries
 TxLoadLib::TxLoadLib()
@@ -352,10 +349,6 @@ int TxUtil::log2(int num)
 {
 #if defined(__GNUC__)
     return __builtin_ctz(num);
-#elif defined(_MSC_VER) && _MSC_VER >= 1400
-    uint32_t i;
-    _BitScanForward((unsigned long *)&i, num);
-    return i;
 #elif defined(__MSC__)
     __asm {
         mov eax, dword ptr[num];
@@ -394,14 +387,6 @@ int TxUtil::getNumberofProcessors()
 {
     int numcore = 1, ret;
 
-#ifdef _WIN32
-#ifndef _SC_NPROCESSORS_ONLN
-    SYSTEM_INFO info;
-    GetSystemInfo(&info);
-#define sysconf(a) info.dwNumberOfProcessors
-#define _SC_NPROCESSORS_ONLN
-#endif
-#endif
 #ifdef _SC_NPROCESSORS_ONLN
     ret = sysconf(_SC_NPROCESSORS_CONF);
     if (ret >= 1) {

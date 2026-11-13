@@ -4,10 +4,6 @@
 // Copyright(C) 2003-2009 Sergey 'Gonetz' Lipski
 // Copyright(C) 2002 Dave2001
 // GNU/GPLv2 licensed: https://gnu.org/licenses/gpl-2.0.html
-#ifdef _WIN32
-#include <Windows.h>
-#include <commctrl.h>
-#endif
 
 #include <Vortex64-video/Renderer/Renderer.h>
 #include <Vortex64-plugin-spec/PresentControl.h>
@@ -37,9 +33,6 @@
 #include "ScreenResolution.h"
 #include <stdarg.h>
 
-#ifdef ANDROID
-uint32_t g_ScreenWidth, g_ScreenHeight;
-#endif
 
 GFX_INFO gfx;
 
@@ -53,9 +46,6 @@ int ev_fullscreen = 0;
 extern int g_viewport_offset;
 extern int g_width, g_height;
 
-#ifdef _WIN32
-HINSTANCE hinstDLL = nullptr;
-#endif
 
 uint32_t   region = 0;
 
@@ -81,32 +71,19 @@ bool g_ghq_use = false;
 bool g_capture_screen = false;
 std::string g_capture_path;
 
-#ifdef _WIN32
-static RECT g_windowedRect = { 0 };
-static HMENU g_windowedMenu = 0;
-static unsigned long g_windowedExStyle, g_windowedStyle;
-bool g_fullscreen;
-#endif // _WIN32
 
-#ifndef _WIN32
 // The window of the emulator is not the plugin's (the render widget of the frontend, whose size the
 // frontend changes: full screen, a resized window). The renderer asks (g_auto_request_*) for the game to
 // be drawn at the size of the window, which is the resolution of the full screen as upstream does it
 // with its list of display modes; back at the windowed size it is the resolution of the settings again.
 volatile int g_auto_request_w = 0, g_auto_request_h = 0;
 static int g_auto_res_w = 0, g_auto_res_h = 0;
-#endif
 
 void ChangeSize()
 {
     WriteTrace(TraceResolution, TraceDebug, "Start");
-#ifdef ANDROID
-    g_width = g_ScreenWidth;
-    g_height = g_ScreenHeight;
-#else
     g_width = ev_fullscreen ? GetFullScreenResWidth(g_settings->FullScreenRes()) : GetScreenResWidth(g_settings->ScreenRes());
     g_height = ev_fullscreen ? GetFullScreenResHeight(g_settings->FullScreenRes()) : GetScreenResHeight(g_settings->ScreenRes());
-#ifndef _WIN32
     if (g_auto_request_w > 0 && g_auto_request_h > 0)
     {
         const bool Windowed = (int)g_width == g_auto_request_w && (int)g_height == g_auto_request_h;
@@ -121,8 +98,6 @@ void ChangeSize()
         g_width = g_auto_res_w;
         g_height = g_auto_res_h;
     }
-#endif
-#endif
     g_scr_res_x = g_res_x = g_width;
     g_scr_res_y = g_res_y = g_height;
 
@@ -372,82 +347,6 @@ void DisplayLoadProgress(const wchar_t *format, ...)
     gfxBufferClear(0, 0, 0xFFFF);
 }
 
-#ifdef _WIN32
-void SetWindowDisplaySize(HWND hWnd)
-{
-    if (ev_fullscreen)
-    {
-        ZeroMemory(&g_windowedRect, sizeof(RECT));
-        GetWindowRect(hWnd, &g_windowedRect);
-
-        g_windowedExStyle = GetWindowLong(hWnd, GWL_EXSTYLE);
-        g_windowedStyle = GetWindowLong(hWnd, GWL_STYLE);
-
-        // primary monitor only
-        if (!EnterFullScreen(g_settings->FullScreenRes()))
-        {
-            WriteTrace(TraceGlitch, TraceWarning, "can't change to fullscreen mode");
-        }
-
-        g_windowedMenu = GetMenu(hWnd);
-        if (g_windowedMenu) SetMenu(hWnd, nullptr);
-
-        HWND hStatusBar = FindWindowEx(hWnd, nullptr, L"msctls_statusbar32", nullptr); // 1964
-        if (hStatusBar) ShowWindow(hStatusBar, SW_HIDE);
-
-        SetWindowLong(hWnd, GWL_STYLE, 0);
-        SetWindowLong(hWnd, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_TOPMOST);
-        SetWindowPos(hWnd, nullptr, 0, 0, g_width, g_height, SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW);
-
-        g_viewport_offset = 0;
-        g_fullscreen = true;
-    }
-    else
-    {
-        RECT clientRect = { 0 }, toolbarRect = { 0 }, statusbarRect = { 0 }, windowedRect = { 0 };
-        HWND hToolBar = FindWindowEx(hWnd, nullptr, REBARCLASSNAME, nullptr);
-        HWND hStatusBar = FindWindowEx(hWnd, nullptr, STATUSCLASSNAME, nullptr);
-        if (hStatusBar == nullptr)
-        {
-            hStatusBar = FindWindowEx(hWnd, nullptr, L"msctls_statusbar32", nullptr);
-        }
-        if (hStatusBar != nullptr && !IsWindowVisible(hStatusBar))
-        {
-            hStatusBar = nullptr;
-        }
-        if (hToolBar != nullptr)
-        {
-            GetWindowRect(hToolBar, &toolbarRect);
-        }
-        if (hStatusBar != nullptr)
-        {
-            GetWindowRect(hStatusBar, &statusbarRect);
-        }
-        g_viewport_offset = statusbarRect.bottom - statusbarRect.top;
-        GetWindowRect(hWnd, &g_windowedRect);
-        GetClientRect(hWnd, &clientRect);
-        g_windowedRect.right += (g_width - (clientRect.right - clientRect.left));
-        g_windowedRect.bottom += (g_height + (toolbarRect.bottom - toolbarRect.top) + (statusbarRect.bottom - statusbarRect.top) - (clientRect.bottom - clientRect.top));
-        SetWindowPos(hWnd, nullptr, 0, 0, g_windowedRect.right - g_windowedRect.left, g_windowedRect.bottom - g_windowedRect.top, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
-
-        g_fullscreen = false;
-    }
-}
-
-void ExitFullScreen(void)
-{
-    if (g_fullscreen)
-    {
-        ChangeDisplaySettings(nullptr, 0);
-        SetWindowPos((HWND)gfx.hWnd, nullptr, g_windowedRect.left, g_windowedRect.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
-        SetWindowLong((HWND)gfx.hWnd, GWL_STYLE, g_windowedStyle);
-        SetWindowLong((HWND)gfx.hWnd, GWL_EXSTYLE, g_windowedExStyle);
-        if (g_windowedMenu) SetMenu((HWND)gfx.hWnd, g_windowedMenu);
-        g_fullscreen = false;
-    }
-}
-
-#endif
 
 void setPattern();
 
@@ -461,9 +360,6 @@ int InitGfx()
     WriteTrace(TraceGlide64, TraceDebug, "-");
 
     ChangeSize();
-#ifdef _WIN32
-    SetWindowDisplaySize((HWND)gfx.hWnd);
-#endif
     if (!gfxSstWinOpen(GFX_COLORFORMAT_RGBA, GFX_ORIGIN_UPPER_LEFT, 2, 1))
     {
         g_Notify->DisplayError("Error setting display mode");
@@ -581,7 +477,6 @@ int InitGfx()
     return TRUE;
 }
 
-#ifndef _WIN32
 // Windows runs the settings dialog on the emulation's side of g_ProcessDListCS and re-creates the renderer around it
 // (DllConfig). Here the dialog runs in the interface thread, which does not own the GL context: it asks, and the
 // emulation thread does the same re-creation at the next display list.
@@ -608,7 +503,6 @@ void ConfigReinitIfRequested()
     }
     CloseConfig();
 }
-#endif
 
 void ReleaseGfx()
 {
@@ -633,31 +527,6 @@ void ReleaseGfx()
     rdp.window_changed = TRUE;
 }
 
-#ifdef _WIN32
-CriticalSection * g_ProcessDListCS = nullptr;
-
-extern "C" int WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID /*lpReserved*/)
-{
-    if (fdwReason == DLL_PROCESS_ATTACH)
-    {
-        hinstDLL = hinst;
-        if (g_ProcessDListCS == nullptr)
-        {
-            g_ProcessDListCS = new CriticalSection();
-        }
-        ConfigInit(hinst);
-    }
-    else if (fdwReason == DLL_PROCESS_DETACH)
-    {
-        if (g_ProcessDListCS)
-        {
-            delete g_ProcessDListCS;
-        }
-        ConfigCleanup();
-    }
-    return TRUE;
-}
-#endif
 
 /******************************************************************
 Function: CaptureScreen
@@ -871,9 +740,6 @@ void CALL PluginLoaded(void)
     WriteTrace(TraceInterface, TraceDebug, "Done");
 }
 
-#ifdef ANDROID
-void vbo_disable(void);
-#endif
 
 /******************************************************************
 Function: RomClosed
@@ -885,9 +751,6 @@ void CALL RomClosed(void)
 {
     WriteTrace(TraceGlide64, TraceDebug, "-");
 
-#ifdef ANDROID
-    vbo_disable();
-#endif
     rdp.window_changed = TRUE;
     g_romopen = FALSE;
     ReleaseGfx();
@@ -1354,31 +1217,3 @@ void CALL ViWidthChanged(void)
 {
 }
 
-#ifdef ANDROID
-/******************************************************************
-Function: SurfaceCreated
-Purpose:  this function is called when the surface is created.
-input:    none
-output:   none
-*******************************************************************/
-void CALL SurfaceCreated(void)
-{
-}
-
-/******************************************************************
-Function: SurfaceChanged
-Purpose:  this function is called when the surface is has changed.
-input:    none
-output:   none
-*******************************************************************/
-void CALL SurfaceChanged(int width, int height)
-{
-    g_ScreenWidth = width;
-    g_ScreenHeight = height;
-}
-
-void Android_JNI_SwapWindow()
-{
-    gfx.SwapBuffers();
-}
-#endif

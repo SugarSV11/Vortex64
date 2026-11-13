@@ -80,9 +80,7 @@ bool ISViewerHandler::Write32(uint32_t Address, uint32_t Value, uint32_t Mask)
 uint32_t ISViewerHandler::Swap32by8(uint32_t Value)
 {
     const uint32_t Swapped =
-#if defined(_MSC_VER)
-        _byteswap_ulong(Value)
-#elif defined(__GNUC__)
+#if   defined(__GNUC__)
         __builtin_bswap32(Value)
 #else
         (Value & 0x000000FFul) << 24 | (Value & 0x0000FF00ul) << 8 | (Value & 0x00FF0000ul) >> 8 | (Value & 0xFF000000ul) >> 24

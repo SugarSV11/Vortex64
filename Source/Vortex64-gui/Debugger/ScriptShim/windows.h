@@ -5,9 +5,6 @@
 // waitable timer of setInterval, and the Winsock names of the socket API (BSD sockets).
 // Only the script targets have this directory on their include path; the implementation
 // is ScriptShim.cpp.
-#ifdef _WIN32
-#error This is the non-Windows stand-in for <windows.h>
-#endif
 
 #include <algorithm>
 #include <arpa/inet.h>

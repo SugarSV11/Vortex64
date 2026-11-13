@@ -134,13 +134,6 @@ void RspAssembler::CallFunc(void * FunctPtr, const char * FunctName)
     call(asmjit::x86::r11);
 }
 
-#ifdef _MSC_VER
-void RspAssembler::CallThis(void * ThisPtr, void * FunctPtr, const char * FunctName)
-{
-    mov(asmjit::x86::rcx, ThisPtr);
-    CallFunc(FunctPtr, FunctName);
-}
-#else
 // Microsoft x64 and System V x86-64 pass the first integer/pointer argument
 // in a different register (rcx vs rdi); this branch previously referred to
 // a nonexistent "CX86Ops" class with a uint64_t-typed signature that didn't
@@ -151,7 +144,6 @@ void RspAssembler::CallThis(void * ThisPtr, void * FunctPtr, const char * FunctN
     mov(asmjit::x86::rdi, ThisPtr);
     CallFunc(FunctPtr, FunctName);
 }
-#endif
 
 void RspAssembler::CompConstToVariable(void * Variable, const char * VariableName, uint32_t Const)
 {

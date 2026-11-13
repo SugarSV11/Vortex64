@@ -815,19 +815,10 @@ duk_ret_t RequireAddressOrAddressRange(duk_context * ctx, duk_idx_t idx, uint32_
 
 duk_ret_t RequireInterpreterCPU(duk_context * ctx)
 {
-#if defined(_WIN32)
-    if (!g_Settings->LoadBool(Setting_ForceInterpreterCPU) && (CPU_TYPE)g_Settings->LoadDword(Game_CpuType) != CPU_Interpreter)
-    {
-        duk_push_error_object(ctx, DUK_ERR_ERROR,
-                              "this feature requires the interpreter core");
-        return duk_throw(ctx);
-    }
-#else
     // The recompiler of this port runs the operations through the interpreter while the debugger or
     // a script wants every operation (CRecompiler::DebuggerNeedsInterpreter), so the callbacks work
     // with any core
     (void)ctx;
-#endif
 
     return 0;
 }

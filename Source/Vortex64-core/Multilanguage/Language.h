@@ -66,6 +66,3 @@ inline const char * GS(LanguageStringID StringID)
     return g_Lang->GetString(StringID).c_str();
 }
 
-#ifdef _WIN32
-const std::wstring wGS(LanguageStringID StringID);
-#endif

@@ -11,9 +11,7 @@
 #include <Vortex64-rsp/Debugger/RSPRegistersUI.h>
 #include <Vortex64-rsp/RSP Command.h>
 #include <Vortex64-rsp/breakpoint.h>
-#ifndef _WIN32
 #include <pthread.h>
-#endif
 
 RSPDebuggerUI::RSPDebuggerUI(CRSPSystem & System) :
     m_System(System),
@@ -113,23 +111,11 @@ void RSPDebuggerUI::UnknownOpcode(void)
     {
         sprintf(Message, "Unhandled Opcode\n%s\n\nStopping emulation.\n\nWould you like to open the debugger?",
                 RSPInstruction(*RSPInfo.SP_PC_REG, m_OpCode.Value).NameAndParam().c_str());
-#ifdef _WIN32
-        response = MessageBoxA(NULL, Message, "Error", MB_YESNO | MB_ICONERROR);
-        if (response == IDYES)
-        {
-            Enter_RSP_Commands_Window();
-        }
-#else
         response = 0;
         fputs(Message, stderr);
         fputc('\n', stderr);
-#endif
     }
-#ifdef _WIN32
-    ExitThread(0);
-#else
     pthread_exit(nullptr);
-#endif
 }
 
 void RSPDebuggerUI::RDP_LogMF0(uint32_t PC, uint32_t Reg)

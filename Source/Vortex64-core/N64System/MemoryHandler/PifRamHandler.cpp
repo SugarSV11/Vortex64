@@ -761,9 +761,7 @@ void PifRamHandler::SystemReset(void)
 uint32_t PifRamHandler::swap32by8(uint32_t word)
 {
     const uint32_t swapped =
-#if defined(_MSC_VER)
-        _byteswap_ulong(word)
-#elif defined(__GNUC__)
+#if   defined(__GNUC__)
         __builtin_bswap32(word)
 #else
         (word & 0x000000FFul) << 24 | (word & 0x0000FF00ul) << 8 | (word & 0x00FF0000ul) >> 8 | (word & 0xFF000000ul) >> 24
