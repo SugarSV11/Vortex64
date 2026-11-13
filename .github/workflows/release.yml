@@ -24,10 +24,20 @@ jobs:
             libsdl2-dev libgl-dev libx11-dev libpipewire-0.3-dev libasound2-dev \
             libfreetype-dev libpng-dev libxcb-cursor0 libxcb-icccm4 libxcb-image0 \
             libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0 libxkbcommon-x11-0 libfuse2
+      - name: SDL2 reciente (el de ubuntu-22.04 es 2.0.20 y el código usa ganchos más nuevos)
+        run: |
+          sudo apt-get install -y libxext-dev libxcursor-dev libxi-dev libxrandr-dev libxss-dev \
+            libxkbcommon-dev libpulse-dev libudev-dev libdbus-1-dev
+          curl -fsSL https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.tar.gz | tar xz
+          cmake -S SDL2-2.32.8 -B sdl-build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_INSTALL_PREFIX=/home/runner/sdl2 -DSDL_STATIC=OFF -DSDL_TESTS=OFF
+          cmake --build sdl-build && cmake --install sdl-build
       - name: Construir AppImage
         run: packaging/linux/build-appimage.sh
         env:
           QMAKE: ${{ env.QT_ROOT_DIR }}/bin/qmake
+          PKG_CONFIG_PATH: /home/runner/sdl2/lib/pkgconfig
+          LD_LIBRARY_PATH: /home/runner/sdl2/lib
       - uses: actions/upload-artifact@v4
         with:
           name: Vortex64-x86_64.AppImage
