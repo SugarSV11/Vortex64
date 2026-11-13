@@ -6,8 +6,9 @@ Vortex64 es un emulador de N64 para Linux, derivado del núcleo de [Project64](h
 (núcleo, RSP, recompilador) con interfaz Qt6 y backends SDL2/OpenGL. Es un binario ELF:
 **sin Wine, sin Proton**.
 
-> ⚠️ **BETA.** Algunos juegos pueden fallar o ir mal. Si encuentras un fallo, abre un
+> **Versión 1.0.0.** Si encuentras un fallo, abre un
 > [issue](https://github.com/SugarSV11/Vortex64/issues) con tu sistema, la versión y los pasos para reproducirlo.
+> La compatibilidad varía según el juego: consulta [Limitaciones conocidas](#limitaciones-conocidas).
 
 ![Biblioteca de Vortex64](Docs/img/library.png)
 <sub>Biblioteca con ROMs de prueba falsas (sin contenido de Nintendo).</sub>
@@ -84,6 +85,13 @@ lo verifica.
 | Recompilador (JIT) | En pruebas; el intérprete es la ruta de referencia |
 | Wayland nativo | Pendiente (hoy funciona vía Xwayland) |
 | Flatpak | Pendiente |
+
+## Limitaciones conocidas
+
+- El recompilador (JIT) es la parte más joven del núcleo; si un juego falla, prueba con el intérprete en los ajustes.
+- Wayland nativo no está disponible todavía: en Wayland funciona mediante Xwayland.
+- No hay Flatpak todavía; el formato de distribución es el AppImage.
+- La compatibilidad por juego no está catalogada; los reportes en Issues ayudan a construir esa lista.
 
 ## Documentación
 

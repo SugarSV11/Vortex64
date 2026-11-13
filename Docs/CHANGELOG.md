@@ -5,6 +5,21 @@ Minor note: Before version 4.0, the changelog didn't exist, and the changelog th
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - Vortex64
+### Added
+- Vortex64: emulador de Nintendo 64 nativo para Linux (sin Wine ni Proton), con interfaz Qt6 y video/audio/entrada SDL2.
+- AppImage portable; los ejecutables son `vortex64` (interfaz) y `vortex64-cli`.
+- Suite de tests sin pantalla integrada en CTest (`ctest --test-dir build`).
+- Migración automática desde las carpetas de configuración de Project64.
+
+### Changed
+- Código renombrado a `Vortex64-*`; eliminados el código y los archivos exclusivos de Windows y Android.
+- Los tests que inyectan teclado/ratón/mando se niegan a correr fuera de un Xvfb aislado.
+
+### Fixes
+- Compila con GCC 16 (`std::isnan`, `std::fpclassify`).
+- AppImage sin librerías corruptas (el `patchelf` de linuxdeploy dejaba inservibles las librerías con RELR).
+
 ## [Unreleased]
 - ROM info now always shows even if "hide advanced options" is checked
 - If emulator runs into permanent loop, it will no longer end emulation
